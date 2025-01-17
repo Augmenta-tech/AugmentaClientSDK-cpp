@@ -214,7 +214,7 @@ namespace AugmentaServerProtocol
         offset += ReadVector<float>(buffer + offset, cluster.weight.data(), 3);
 
         // TODO: This only works with quaternion mode
-        offset += ReadVector<float>(buffer + offset, cluster.rotation.data(), 4);
+        offset += ReadVector<float>(buffer + offset, cluster.boundingBoxRotation.data(), 4);
 
         offset += ReadVector<float>(buffer + offset, cluster.lookAt.data(), 3);
 

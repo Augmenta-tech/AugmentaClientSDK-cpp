@@ -91,14 +91,14 @@ namespace AugmentaServerProtocol
             }
 
             template <typename Vector3f>
-            void getRotationEuler(Vector3f *out) const
+            void getBoundingBoxRotationEuler(Vector3f *out) const
             {
                 static_assert(sizeof(Vector3f) == 12);
                 std::memcpy(out, rotation.data(), sizeof(Vector3f))
             }
 
             template <typename Vector4f>
-            void getRotationQuat(Vector4f *out) const
+            void getBoundingBoxRotationQuaternions(Vector4f *out) const
             {
                 static_assert(sizeof(Vector4f) == 16);
                 std::memcpy(out, rotation.data(), sizeof(Vector4f))
@@ -121,7 +121,7 @@ namespace AugmentaServerProtocol
             std::array<float, 3> boundingBoxSize;
             std::array<float, 3> weight;
 
-            std::array<float, 4> rotation;
+            std::array<float, 4> boundingBoxRotation;
 
             std::array<float, 3> lookAt;
         };
