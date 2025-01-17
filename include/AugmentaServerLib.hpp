@@ -138,6 +138,11 @@ namespace AugmentaServerProtocol
                 std::memcpy(outData, pointsPtr, pointsCount * sizeof(Vector3f));
             }
 
+            float getPoint(size_t pointIdx, float* outPoint) const
+            {
+                std::memcpy(outPoint, pointsPtr + (pointIdx * sizeof(float) * 3), 3);
+            }
+
         private:
             friend struct DataBlob;
 
