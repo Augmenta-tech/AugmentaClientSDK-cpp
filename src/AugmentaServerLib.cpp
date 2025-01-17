@@ -76,18 +76,22 @@ namespace AugmentaServerProtocol
         Cluster = 1,
     };
 
-    DataBlobParser::DataBlobParser(const std::byte* buffer, size_t bufferSize)
-        : buffer(buffer), bufferSize(bufferSize)
+    DataBlob::DataBlob(const std::byte* blob, size_t blobSize)
+    {
+        processPacket(blob, blobSize);
+    }
+
+    DataBlob DataBlob::parse(const std::byte* buffer, size_t bufferSize)
     {
         if (isBigEndian())
         {
             throw(std::runtime_error("The system appears to be big endian, while only little endian is supported."));
         }
 
-        processPacket(buffer, bufferSize);
+        return DataBlob(buffer, bufferSize);
     }
 
-    size_t DataBlobParser::processPacket(const std::byte* packetBuffer, size_t packetSize)
+    size_t DataBlob::processPacket(const std::byte* packetBuffer, size_t packetSize)
     {
         size_t offset = 0;
 
@@ -126,7 +130,7 @@ namespace AugmentaServerProtocol
 
         case PacketType::Scene:
         {
-            offset += processScenePacket(packetBuffer + offset, scene);
+            offset += processScenePacket(packetBuffer + offset, sceneInfo);
             break;
         }
 
@@ -139,7 +143,7 @@ namespace AugmentaServerProtocol
         return offset;
     }
 
-    size_t DataBlobParser::processObjectPacket(const std::byte* packetBuffer, ObjectPacket &outObject)
+    size_t DataBlob::processObjectPacket(const std::byte* packetBuffer, ObjectPacket &outObject)
     {
         // At this point packetType has already been read
         size_t offset = 0;
@@ -179,7 +183,7 @@ namespace AugmentaServerProtocol
         return offset;
     }
 
-    size_t DataBlobParser::processPointCloudProperty(const std::byte* buffer, PointCloudProperty &outPointCloud)
+    size_t DataBlob::processPointCloudProperty(const std::byte* buffer, PointCloudProperty &outPointCloud)
     {
         size_t offset = 0;
 
@@ -189,7 +193,7 @@ namespace AugmentaServerProtocol
         return offset + (outPointCloud.pointsCount * sizeof(float) * 4); 
     }
 
-    size_t DataBlobParser::processClusterProperty(const std::byte* buffer, ClusterProperty &outCluster)
+    size_t DataBlob::processClusterProperty(const std::byte* buffer, ClusterProperty &outCluster)
     {
         size_t offset = 0;
 
@@ -211,13 +215,13 @@ namespace AugmentaServerProtocol
         return offset;
     }
 
-    size_t DataBlobParser::processZonePacket(const std::byte* buffer, ZonePacket &outZone)
+    size_t DataBlob::processZonePacket(const std::byte* buffer, ZonePacket &outZone)
     {
         // TODO
         return 0;
     }
 
-    size_t DataBlobParser::processScenePacket(const std::byte* buffer, SceneInfoPacket &outScene)
+    size_t DataBlob::processScenePacket(const std::byte* buffer, SceneInfoPacket &outScene)
     {
         // PacketType has already been read
         size_t offset = 0;

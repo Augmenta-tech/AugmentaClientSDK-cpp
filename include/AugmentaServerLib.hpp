@@ -12,7 +12,7 @@ namespace AugmentaServerProtocol
         // TODO: Add doc !
     };
 
-    namespace DataChannel
+    namespace ControlChannel
     {
         class Handshake
         {
@@ -27,148 +27,146 @@ namespace AugmentaServerProtocol
         };
     }
 
-    class SceneInfoPacket
+    class DataBlob
     {
     public:
-        int getAddressLength() const { return addressLength; }
-
-        template <typename CharT>
-        void getAddress(CharT *outStr) const
+        class SceneInfoPacket
         {
-            static_assert(sizeof(CharT) == 4);
-            std::memcpy(outStr, addressPtr, sizeof(CharT));
-        }
+        public:
+            int getAddressLength() const { return addressLength; }
 
-    private:
-        friend struct DataBlobParser;
+            template <typename CharT>
+            void getAddress(CharT *outStr) const
+            {
+                static_assert(sizeof(CharT) == 4);
+                std::memcpy(outStr, addressPtr, sizeof(CharT));
+            }
 
-        int addressLength;
-        const std::byte *addressPtr = nullptr;
-    };
+        private:
+            friend struct DataBlob;
 
-    class ClusterProperty
-    {
-    public:
-        ClusterState getState() const { return state; }
+            int addressLength;
+            const std::byte *addressPtr = nullptr;
+        };
 
-        template <typename Vector3f>
-        void getCentroid(Vector3f *outCentroid) const
+        class ClusterProperty
         {
-            static_assert(sizeof(Vector3f) == 12);
-            std::memcpy(outCentroid, centroid.data(), sizeof(Vector3f));
-        }
+        public:
+            ClusterState getState() const { return state; }
 
-        template <typename Vector3f>
-        void getVelocity(Vector3f *outVelocity) const
+            template <typename Vector3f>
+            void getCentroid(Vector3f *outCentroid) const
+            {
+                static_assert(sizeof(Vector3f) == 12);
+                std::memcpy(outCentroid, centroid.data(), sizeof(Vector3f));
+            }
+
+            template <typename Vector3f>
+            void getVelocity(Vector3f *outVelocity) const
+            {
+                static_assert(sizeof(Vector3f) == 12);
+                std::memcpy(outVelocity, velocity.data(), sizeof(Vector3f));
+            }
+
+            template <typename Vector3f>
+            void getBoundingBoxCenter(Vector3f *outBoundingBoxCenter) const
+            {
+                static_assert(sizeof(Vector3f) == 12);
+                std::memcpy(outBoundingBoxCenter, boundingBoxCenter.data(), sizeof(Vector3f));
+            }
+
+            template <typename Vector3f>
+            void getBoundingBoxSize(Vector3f *out) const
+            {
+                static_assert(sizeof(Vector3f) == 12);
+                std::memcpy(out, boundingBoxSize.data(), sizeof(Vector3f));
+            }
+
+            template <typename Vector3f>
+            void getWeight(Vector3f *out) const
+            {
+                static_assert(sizeof(Vector3f) == 12);
+                std::memcpy(out, weight.data(), sizeof(Vector3f));
+            }
+
+            template <typename Vector3f>
+            void getRotationEuler(Vector3f *out) const
+            {
+                static_assert(sizeof(Vector3f) == 12);
+                std::memcpy(out, rotation.data(), sizeof(Vector3f))
+            }
+
+            template <typename Vector4f>
+            void getRotationQuat(Vector4f *out) const
+            {
+                static_assert(sizeof(Vector4f) == 16);
+                std::memcpy(out, rotation.data(), sizeof(Vector4f))
+            }
+
+            template <typename Vector3f>
+            void getLookAt(Vector3f *out) const
+            {
+                static_assert(sizeof(Vector3f) == 12);
+                std::memcpy(out, lookAt.data(), sizeof(Vector3f));
+            }
+
+        private:
+            friend struct DataBlob;
+
+            ClusterState state;
+            std::array<float, 3> centroid;
+            std::array<float, 3> velocity;
+            std::array<float, 3> boundingBoxCenter;
+            std::array<float, 3> boundingBoxSize;
+            std::array<float, 3> weight;
+
+            std::array<float, 4> rotation;
+
+            std::array<float, 3> lookAt;
+        };
+
+        class PointCloudProperty
         {
-            static_assert(sizeof(Vector3f) == 12);
-            std::memcpy(outVelocity, velocity.data(), sizeof(Vector3f));
-        }
+        public:
+            int getPointCount() const { return pointsCount; }
 
-        template <typename Vector3f>
-        void getBoundingBoxCenter(Vector3f *outBoundingBoxCenter) const
+            template <typename Vector3f>
+            void getPointsData(Vector3f *outData) const
+            {
+                static_assert(sizeof(Vector3f) == 12);
+                std::memcpy(outData, pointsPtr, pointsCount * sizeof(Vector3f));
+            }
+
+        private:
+            friend struct DataBlob;
+
+            int pointsCount;
+            const std::byte *pointsPtr;
+        };
+
+        class ObjectPacket
         {
-            static_assert(sizeof(Vector3f) == 12);
-            std::memcpy(outBoundingBoxCenter, boundingBoxCenter.data(), sizeof(Vector3f));
-        }
+        public:
+            const std::vector<ClusterProperty> &getClusters() const { return clusters; }
+            const std::vector<PointCloudProperty> &getPointClouds() const { return pointClouds; }
 
-        template <typename Vector3f>
-        void getBoundingBoxSize(Vector3f *out) const
+            int getID() const { return id; }
+
+        private:
+            friend struct DataBlob;
+
+            int id;
+            std::vector<ClusterProperty> clusters;
+            std::vector<PointCloudProperty> pointClouds;
+        };
+
+        // TODO
+        class ZonePacket
         {
-            static_assert(sizeof(Vector3f) == 12);
-            std::memcpy(out, boundingBoxSize.data(), sizeof(Vector3f));
-        }
-
-        template <typename Vector3f>
-        void getWeight(Vector3f *out) const
-        {
-            static_assert(sizeof(Vector3f) == 12);
-            std::memcpy(out, weight.data(), sizeof(Vector3f));
-        }
-
-        template <typename Vector3f>
-        void getRotationEuler(Vector3f *out) const
-        {
-            static_assert(sizeof(Vector3f) == 12);
-            std::memcpy(out, rotation.data(), sizeof(Vector3f))
-        }
-
-        template <typename Vector4f>
-        void getRotationQuat(Vector4f *out) const
-        {
-            static_assert(sizeof(Vector4f) == 16);
-            std::memcpy(out, rotation.data(), sizeof(Vector4f))
-        }
-
-        template <typename Vector3f>
-        void getLookAt(Vector3f *out) const
-        {
-            static_assert(sizeof(Vector3f) == 12);
-            std::memcpy(out, lookAt.data(), sizeof(Vector3f));
-        }
-
-    private:
-        friend struct DataBlobParser;
-
-        ClusterState state;
-        std::array<float, 3> centroid;
-        std::array<float, 3> velocity;
-        std::array<float, 3> boundingBoxCenter;
-        std::array<float, 3> boundingBoxSize;
-        std::array<float, 3> weight;
-
-        std::array<float, 4> rotation;
-
-        std::array<float, 3> lookAt;
-    };
-
-    class PointCloudProperty
-    {
-    public:
-        int getPointCount() const { return pointsCount; }
-
-        template <typename Vector3f>
-        void getPointsData(Vector3f *outData) const
-        {
-            static_assert(sizeof(Vector3f) == 12);
-            std::memcpy(outData, pointsPtr, pointsCount * sizeof(Vector3f));
-        }
-
-    private:
-        friend struct DataBlobParser;
-
-        int pointsCount;
-        const std::byte *pointsPtr;
-    };
-
-    class ObjectPacket
-    {
-    public:
-        const std::vector<ClusterProperty> &getClusters() const { return clusters; }
-        const std::vector<PointCloudProperty> &getPointClouds() const { return pointClouds; }
-
-        int getID() const { return id; }
-
-    private:
-        friend struct DataBlobParser;
-
-        int id;
-        std::vector<ClusterProperty> clusters;
-        std::vector<PointCloudProperty> pointClouds;
-    };
-
-    // TODO
-    class ZonePacket
-    {
-    public:
-    private:
-        friend struct DataBlobParser;
-    };
-
-    class DataBlobParser
-    {
-    public:
-        DataBlobParser(const std::byte *buffer, size_t bufferSize);
+        public:
+        private:
+            friend struct DataBlob;
+        };
 
         size_t getObjectCount() const { return objects.size(); }
         const std::vector<ObjectPacket> &getObjects() const { return objects; }
@@ -176,13 +174,14 @@ namespace AugmentaServerProtocol
         size_t getZoneCount() const { return zones.size(); }
         const std::vector<ZonePacket> &getZones() const { return zones; }
 
-        const SceneInfoPacket &getScene() const { return scene; }
+        const SceneInfoPacket &getSceneInfo() const { return sceneInfo; }
+
+        static DataBlob parse(const std::byte *buffer, size_t bufferSize);
 
     private:
-        const std::byte *buffer = nullptr;
-        const size_t bufferSize = 0;
+        DataBlob(const std::byte* blob, size_t blobSize);
 
-        SceneInfoPacket scene;
+        SceneInfoPacket sceneInfo;
         std::vector<ObjectPacket> objects;
         std::vector<ZonePacket> zones;
 
@@ -195,6 +194,7 @@ namespace AugmentaServerProtocol
         size_t processPointCloudProperty(const std::byte *pointCloudBegin, PointCloudProperty &outPointCloud);
         size_t processClusterProperty(const std::byte *clusterBegin, ClusterProperty &outCluster);
     };
+
 
     class ControlMessageParser
     {
