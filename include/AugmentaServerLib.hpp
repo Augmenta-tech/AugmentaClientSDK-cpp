@@ -168,7 +168,7 @@ namespace AugmentaServerProtocol
     class DataBlobParser
     {
     public:
-        DataBlobParser(const std::vector<std::byte> &inBuffer);
+        DataBlobParser(const std::byte *buffer, size_t bufferSize);
 
         size_t getObjectCount() const { return objects.size(); }
         const std::vector<ObjectPacket> &getObjects() const { return objects; }
@@ -179,18 +179,21 @@ namespace AugmentaServerProtocol
         const SceneInfoPacket &getScene() const { return scene; }
 
     private:
-        const std::vector<std::byte> *buffer = nullptr;
+        const std::byte *buffer = nullptr;
+        const size_t bufferSize = 0;
 
         SceneInfoPacket scene;
         std::vector<ObjectPacket> objects;
         std::vector<ZonePacket> zones;
 
-        size_t processPacket(const std::vector<std::byte>::const_iterator &packetBegin, const std::vector<std::byte>::const_iterator &packetEnd);
-        size_t processObjectPacket(const std::vector<std::byte>::const_iterator &packetBegin, ObjectPacket &outObject);
-        size_t processZonePacket(const std::vector<std::byte>::const_iterator &dataBegin, ZonePacket &outZone);
-        size_t processScenePacket(const std::vector<std::byte>::const_iterator &packetBegin, SceneInfoPacket &outZone);
-        size_t processPointCloudProperty(const std::vector<std::byte>::const_iterator &pointCloudBegin, PointCloudProperty &outPointCloud);
-        size_t processClusterProperty(const std::vector<std::byte>::const_iterator &clusterBegin, ClusterProperty &outCluster);
+        size_t processPacket(const std::byte *packetBegin, size_t packetSize);
+
+        size_t processObjectPacket(const std::byte *packetBegin, ObjectPacket &outObject);
+        size_t processZonePacket(const std::byte *dataBegin, ZonePacket &outZone);
+        size_t processScenePacket(const std::byte *packetBegin, SceneInfoPacket &outZone);
+
+        size_t processPointCloudProperty(const std::byte *pointCloudBegin, PointCloudProperty &outPointCloud);
+        size_t processClusterProperty(const std::byte *clusterBegin, ClusterProperty &outCluster);
     };
 
     class ControlMessageParser
@@ -199,6 +202,6 @@ namespace AugmentaServerProtocol
         const std::string *message;
 
     private:
-        ControlMessageParser(const std::string& inMessage);
+        ControlMessageParser(const std::string &inMessage);
     };
 }
