@@ -166,15 +166,13 @@ namespace AugmentaServerProtocol
             {
             case PropertyType::Points:
             {
-                PointCloudProperty &pc = outObject.pointClouds.emplace_back();
-                offset += processPointCloudProperty(packetBuffer + offset, pc);
+                offset += processPointCloudProperty(packetBuffer + offset, outObject);
                 break;
             }
 
             case PropertyType::Cluster:
             {
-                ClusterProperty &cluster = outObject.clusters.emplace_back();
-                offset += processClusterProperty(packetBuffer + offset, cluster);
+                offset += processClusterProperty(packetBuffer + offset, outObject);
                 break;
             }
             }
@@ -183,34 +181,42 @@ namespace AugmentaServerProtocol
         return offset;
     }
 
-    size_t DataBlob::processPointCloudProperty(const std::byte* buffer, PointCloudProperty &outPointCloud)
+    size_t DataBlob::processPointCloudProperty(const std::byte* buffer, ObjectPacket &object)
     {
+        assert(!object.hasPointCloud());
+
+        auto& pointCloud = object.pointCloud.emplace();
+        
         size_t offset = 0;
 
-        offset += ReadInt(buffer + offset, &outPointCloud.pointsCount);
-        outPointCloud.pointsPtr = buffer + offset;
+        offset += ReadInt(buffer + offset, &pointCloud.pointsCount);
+        pointCloud.pointsPtr = buffer + offset;
 
-        return offset + (outPointCloud.pointsCount * sizeof(float) * 4); 
+        return offset + (pointCloud.pointsCount * sizeof(float) * 4); 
     }
 
-    size_t DataBlob::processClusterProperty(const std::byte* buffer, ClusterProperty &outCluster)
+    size_t DataBlob::processClusterProperty(const std::byte* buffer, ObjectPacket &object)
     {
+        assert(!object.hasCluster());
+
+        auto& cluster = object.cluster.emplace();
+
         size_t offset = 0;
 
         int stateInt;
         offset += ReadInt(buffer + offset, &stateInt);
-        outCluster.state = static_cast<ClusterState>(stateInt);
+        cluster.state = static_cast<ClusterState>(stateInt);
 
-        offset += ReadVector<float>(buffer + offset, outCluster.centroid.data(), 3);
-        offset += ReadVector<float>(buffer + offset, outCluster.velocity.data(), 3);
-        offset += ReadVector<float>(buffer + offset, outCluster.boundingBoxCenter.data(), 3);
-        offset += ReadVector<float>(buffer + offset, outCluster.boundingBoxSize.data(), 3);
-        offset += ReadVector<float>(buffer + offset, outCluster.weight.data(), 3);
+        offset += ReadVector<float>(buffer + offset, cluster.centroid.data(), 3);
+        offset += ReadVector<float>(buffer + offset, cluster.velocity.data(), 3);
+        offset += ReadVector<float>(buffer + offset, cluster.boundingBoxCenter.data(), 3);
+        offset += ReadVector<float>(buffer + offset, cluster.boundingBoxSize.data(), 3);
+        offset += ReadVector<float>(buffer + offset, cluster.weight.data(), 3);
 
         // TODO: This only works with quaternion mode
-        offset += ReadVector<float>(buffer + offset, outCluster.rotation.data(), 4);
+        offset += ReadVector<float>(buffer + offset, cluster.rotation.data(), 4);
 
-        offset += ReadVector<float>(buffer + offset, outCluster.lookAt.data(), 3);
+        offset += ReadVector<float>(buffer + offset, cluster.lookAt.data(), 3);
 
         return offset;
     }

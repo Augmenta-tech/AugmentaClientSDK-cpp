@@ -4,6 +4,7 @@
 #include <memory>
 #include <string>
 #include <array>
+#include <optional>
 
 namespace AugmentaServerProtocol
 {
@@ -147,8 +148,11 @@ namespace AugmentaServerProtocol
         class ObjectPacket
         {
         public:
-            const std::vector<ClusterProperty> &getClusters() const { return clusters; }
-            const std::vector<PointCloudProperty> &getPointClouds() const { return pointClouds; }
+            bool hasCluster() const { return cluster.has_value(); }
+            const ClusterProperty &getCluster() const { return cluster.value(); }
+
+            bool hasPointCloud() const { return pointCloud.has_value(); }
+            const PointCloudProperty &getPointCloud() const { return pointCloud.value(); }
 
             int getID() const { return id; }
 
@@ -156,8 +160,8 @@ namespace AugmentaServerProtocol
             friend struct DataBlob;
 
             int id;
-            std::vector<ClusterProperty> clusters;
-            std::vector<PointCloudProperty> pointClouds;
+            std::optional<ClusterProperty> cluster;
+            std::optional<PointCloudProperty> pointCloud;
         };
 
         // TODO
@@ -179,7 +183,7 @@ namespace AugmentaServerProtocol
         static DataBlob parse(const std::byte *buffer, size_t bufferSize);
 
     private:
-        DataBlob(const std::byte* blob, size_t blobSize);
+        DataBlob(const std::byte *blob, size_t blobSize);
 
         SceneInfoPacket sceneInfo;
         std::vector<ObjectPacket> objects;
@@ -191,10 +195,9 @@ namespace AugmentaServerProtocol
         size_t processZonePacket(const std::byte *dataBegin, ZonePacket &outZone);
         size_t processScenePacket(const std::byte *packetBegin, SceneInfoPacket &outZone);
 
-        size_t processPointCloudProperty(const std::byte *pointCloudBegin, PointCloudProperty &outPointCloud);
-        size_t processClusterProperty(const std::byte *clusterBegin, ClusterProperty &outCluster);
+        size_t processPointCloudProperty(const std::byte *pointCloudBegin, ObjectPacket &object);
+        size_t processClusterProperty(const std::byte *clusterBegin, ObjectPacket &object);
     };
-
 
     class ControlMessageParser
     {
