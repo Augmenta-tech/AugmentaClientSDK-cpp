@@ -129,7 +129,8 @@ namespace AugmentaServerProtocol
                 std::memcpy(outData, pointsPtr, pointsCount * sizeof(Vector3f));
             }
 
-            float getPoint(size_t pointIdx, float *outPoint) const
+            // Return the point (Vec3f) at a given idx. Prefer copying all point data at once if you can.
+            void getPoint(size_t pointIdx, float *outPoint) const
             {
                 std::memcpy(outPoint, pointsPtr + (pointIdx * sizeof(float) * 3), 3);
             }
