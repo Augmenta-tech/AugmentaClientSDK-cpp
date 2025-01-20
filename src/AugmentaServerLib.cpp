@@ -7,7 +7,7 @@
 namespace
 {
     // Read an int from a byte buffer. Returns the number of bytes read.
-    static size_t ReadInt(const std::byte* buffer, int *out)
+    static size_t ReadInt(const std::byte *buffer, int *out)
     {
         std::memcpy(out, buffer, sizeof(int));
         return sizeof(int);
@@ -16,7 +16,7 @@ namespace
     // Read a contiguous vector from a byte buffer. Returns the number of bytes read.
     // The output vector's memory should have been allocated beforehand.
     template <typename T>
-    static size_t ReadVector(const std::byte* buffer, T *out, size_t elementCount)
+    static size_t ReadVector(const std::byte *buffer, T *out, size_t elementCount)
     {
         std::memcpy(out, buffer, elementCount * sizeof(T));
         return elementCount * sizeof(T);
@@ -28,25 +28,32 @@ namespace
         return sizeof(float);
     }
 
-    template <typename Vector3f>
-    static Vector3f ReadVector3f(const nlohmann::json &json)
+    template <typename T>
+    T ReadJSON(const nlohmann::json &json, const std::string &key, const T &defaultValue)
     {
-        Vector3f out;
-        out[0] = json[0];
-        out[1] = json[1];
-        out[2] = json[2];
-        return out;
+        auto it = json.find(key);
+        if (it == json.end())
+        {
+            return defaultValue;
+        }
+        return *it;
     }
 
-    template <typename Vector4f>
-    static Vector4f ReadVector4f(const nlohmann::json &json)
+    template <size_t ArraySize>
+    std::array<float, ArraySize> ReadJSON(const nlohmann::json &json, const std::string &key, const std::array<float, 3> &defaultValue)
     {
-        Vector4f out;
-        out[0] = json[0];
-        out[1] = json[1];
-        out[2] = json[2];
-        out[3] = json[3];
-        return out;
+        auto it = json.find(key);
+        if (it == json.end())
+        {
+            return defaultValue;
+        }
+
+        std::array<float, ArraySize> value;
+        for (size_t i = 0; i < ArraySize; ++i)
+        {
+            value[i] = json[i];
+        }
+        return value;
     }
 
     bool isBigEndian()
@@ -60,183 +67,260 @@ namespace
         return bint.c[0] == 1;
     }
 }
+
 namespace AugmentaServerProtocol
 {
-    enum class PacketType : uint8_t
+    struct DataBlobParser
     {
-        Object = 0,
-        Zone = 1,
-        Scene = 2,
-        Bundle = 255,
+        enum class PacketType : uint8_t
+        {
+            Object = 0,
+            Zone = 1,
+            Scene = 2,
+            Bundle = 255,
+        };
+
+        enum class PropertyType : int
+        {
+            Points = 0,
+            Cluster = 1,
+        };
+
+        static size_t processPacket(const std::byte *packetBuffer, size_t packetSize, DataBlob &outDataBlob)
+        {
+            size_t offset = 0;
+
+            PacketType type = static_cast<PacketType>(*packetBuffer);
+            offset += 1;
+
+            switch (type)
+            {
+            case PacketType::Bundle:
+            {
+                while (offset != packetSize)
+                {
+                    int subPacketSize;
+                    ReadInt(packetBuffer + offset + sizeof(PacketType), &subPacketSize);
+
+                    auto subPacketBegin = packetBuffer + offset;
+                    offset += processPacket(subPacketBegin, subPacketSize, outDataBlob);
+                }
+
+                break;
+            }
+
+            case PacketType::Object:
+            {
+                auto &object = outDataBlob.objects.emplace_back();
+                offset += processObjectPacket(packetBuffer + offset, object);
+                break;
+            }
+
+            case PacketType::Zone:
+            {
+                auto &zone = outDataBlob.zones.emplace_back();
+                offset += processZonePacket(packetBuffer + offset, zone);
+                break;
+            }
+
+            case PacketType::Scene:
+            {
+                offset += processScenePacket(packetBuffer + offset, outDataBlob.sceneInfo);
+                break;
+            }
+
+            default:
+            {
+                assert(false); // Unexpected packet type !
+            }
+            }
+
+            return offset;
+        }
+
+        static size_t processObjectPacket(const std::byte *packetBuffer, DataBlob::ObjectPacket &outObject)
+        {
+            // At this point packetType has already been read
+            size_t offset = 0;
+
+            int packetSize;
+            offset += ReadInt(packetBuffer + offset, &packetSize);
+
+            int objectID;
+            offset += ReadInt(packetBuffer + offset, &outObject.id);
+
+            while (offset != packetSize)
+            {
+                int propertyID;
+                offset += ReadInt(packetBuffer + offset, &propertyID);
+
+                int propertySize;
+                offset += ReadInt(packetBuffer + offset, &propertySize);
+
+                switch (static_cast<PropertyType>(propertyID))
+                {
+                case PropertyType::Points:
+                {
+                    offset += processPointCloudProperty(packetBuffer + offset, outObject);
+                    break;
+                }
+
+                case PropertyType::Cluster:
+                {
+                    offset += processClusterProperty(packetBuffer + offset, outObject);
+                    break;
+                }
+                }
+            }
+
+            return offset;
+        }
+
+        static size_t processPointCloudProperty(const std::byte *buffer, DataBlob::ObjectPacket &object)
+        {
+            assert(!object.hasPointCloud());
+
+            auto &pointCloud = object.pointCloud.emplace();
+
+            size_t offset = 0;
+
+            offset += ReadInt(buffer + offset, &pointCloud.pointsCount);
+            pointCloud.pointsPtr = buffer + offset;
+
+            return offset + (pointCloud.pointsCount * sizeof(float) * 4);
+        }
+
+        static size_t processClusterProperty(const std::byte *buffer, DataBlob::ObjectPacket &object)
+        {
+            assert(!object.hasCluster());
+
+            auto &cluster = object.cluster.emplace();
+
+            size_t offset = 0;
+
+            int stateInt;
+            offset += ReadInt(buffer + offset, &stateInt);
+            cluster.state = static_cast<ClusterState>(stateInt);
+
+            offset += ReadVector<float>(buffer + offset, cluster.centroid.data(), 3);
+            offset += ReadVector<float>(buffer + offset, cluster.velocity.data(), 3);
+            offset += ReadVector<float>(buffer + offset, cluster.boundingBoxCenter.data(), 3);
+            offset += ReadVector<float>(buffer + offset, cluster.boundingBoxSize.data(), 3);
+            offset += ReadVector<float>(buffer + offset, cluster.weight.data(), 3);
+
+            // TODO: This only works with quaternion mode
+            offset += ReadVector<float>(buffer + offset, cluster.boundingBoxRotation.data(), 4);
+
+            offset += ReadVector<float>(buffer + offset, cluster.lookAt.data(), 3);
+
+            return offset;
+        }
+
+        static size_t processZonePacket(const std::byte *buffer, DataBlob::ZonePacket &outZone)
+        {
+            // TODO
+            return 0;
+        }
+
+        static size_t processScenePacket(const std::byte *buffer, DataBlob::SceneInfoPacket &outScene)
+        {
+            // PacketType has already been read
+            size_t offset = 0;
+
+            int packetSize;
+            offset += ReadInt(buffer + offset, &packetSize);
+            offset += ReadInt(buffer + offset, &outScene.addressLength);
+            outScene.addressPtr = buffer + offset;
+
+            return offset + (outScene.addressLength * sizeof(char));
+        }
     };
 
-    enum class PropertyType : int
+    struct ControlMessageParser
     {
-        Points = 0,
-        Cluster = 1,
+        static void parseContainer(const nlohmann::json &containerJson, ControlMessage::Container &outContainer)
+        {
+            // TODO: replace with optionnals ?
+            // TODO: What *is* optionnal, and what isn't ?
+            outContainer.address = containerJson.value("address", "");
+            outContainer.name = containerJson.value("name", "");
+            outContainer.position = ReadJSON<std::array<float, 3>>(containerJson, "position", {0, 0, 0});
+            outContainer.rotation = ReadJSON<std::array<float, 3>>(containerJson, "rotation", {0, 0, 0});
+            outContainer.color = ReadJSON<std::array<float, 4>>(containerJson, "color", {0, 0, 0, 0});
+
+            auto typeJson = containerJson.find("type");
+            if (typeJson != containerJson.end())
+            {
+                const std::string &typeStr = *typeJson;
+                if (typeStr == "Zone")
+                {
+                    outContainer.type = ControlMessage::Container::Type::Zone;
+                    // TODO
+                }
+                else if (typeStr == "Scene")
+                {
+                    outContainer.type = ControlMessage::Container::Type::Scene;
+                    outContainer.size = ReadJSON<std::array<float, 3>>(containerJson, "size", {0, 0, 0});
+                }
+                else // Container
+                {
+                    outContainer.type = ControlMessage::Container::Type::Container;
+                }
+            }
+
+            auto childrenJson = containerJson.find("children");
+            if (childrenJson != containerJson.end())
+            {
+                for (const auto &childJson : *childrenJson)
+                {
+                    auto &child = outContainer.children.emplace_back();
+                    parseContainer(childJson, child);
+                }
+            }
+        }
+
+        static void parseControlMessage(const nlohmann::json &messageJson, ControlMessage &outMessage)
+        {
+            if (messageJson.contains("status"))
+            {
+                if (messageJson["status"] == "ok")
+                {
+                    if (messageJson.contains("setup"))
+                    {
+                        outMessage.type = ControlMessage::Type::Setup;
+                        const auto &setupJson = messageJson["setup"];
+                        ControlMessageParser::parseContainer(setupJson, outMessage.container);
+                    }
+                }
+            }
+            else if (messageJson.contains("update"))
+            {
+                outMessage.type = ControlMessage::Type::Update;
+                const auto &updateJson = messageJson["update"];
+                ControlMessageParser::parseContainer(updateJson, outMessage.container);
+            }
+        }
     };
 
-    DataBlob::DataBlob(const std::byte* blob, size_t blobSize)
-    {
-        processPacket(blob, blobSize);
-    }
-
-    DataBlob DataBlob::parse(const std::byte* buffer, size_t bufferSize)
+    DataBlob Client::parseDataBlob(const std::byte *buffer, size_t bufferSize)
     {
         if (isBigEndian())
         {
             throw(std::runtime_error("The system appears to be big endian, while only little endian is supported."));
         }
 
-        return DataBlob(buffer, bufferSize);
+        DataBlob blob;
+        DataBlobParser::processPacket(buffer, bufferSize, blob);
+
+        return blob;
     }
 
-    size_t DataBlob::processPacket(const std::byte* packetBuffer, size_t packetSize)
+    ControlMessage Client::parseControlMessage(const std::string &rawMessage)
     {
-        size_t offset = 0;
+        auto messageJson = nlohmann::json::parse(rawMessage);
+        ControlMessage outMessage;
+        ControlMessageParser::parseControlMessage(messageJson, outMessage);
 
-        PacketType type = static_cast<PacketType>(*packetBuffer);
-        offset += 1;
-
-        switch (type)
-        {
-        case PacketType::Bundle:
-        {
-            while (offset != packetSize)
-            {
-                int subPacketSize;
-                ReadInt(packetBuffer + offset + sizeof(PacketType), &subPacketSize);
-
-                auto subPacketBegin = packetBuffer + offset;
-                offset += processPacket(subPacketBegin, subPacketSize);
-            }
-
-            break;
-        }
-
-        case PacketType::Object:
-        {
-            auto &object = objects.emplace_back();
-            offset += processObjectPacket(packetBuffer + offset, object);
-            break;
-        }
-
-        case PacketType::Zone:
-        {
-            auto &zone = zones.emplace_back();
-            offset += processZonePacket(packetBuffer + offset, zone);
-            break;
-        }
-
-        case PacketType::Scene:
-        {
-            offset += processScenePacket(packetBuffer + offset, sceneInfo);
-            break;
-        }
-
-        default:
-        {
-            assert(false); // Unexpected packet type !
-        }
-        }
-
-        return offset;
-    }
-
-    size_t DataBlob::processObjectPacket(const std::byte* packetBuffer, ObjectPacket &outObject)
-    {
-        // At this point packetType has already been read
-        size_t offset = 0;
-
-        int packetSize;
-        offset += ReadInt(packetBuffer + offset, &packetSize);
-
-        int objectID;
-        offset += ReadInt(packetBuffer + offset, &outObject.id);
-
-        while (offset != packetSize)
-        {
-            int propertyID;
-            offset += ReadInt(packetBuffer + offset, &propertyID);
-
-            int propertySize;
-            offset += ReadInt(packetBuffer + offset, &propertySize);
-
-            switch (static_cast<PropertyType>(propertyID))
-            {
-            case PropertyType::Points:
-            {
-                offset += processPointCloudProperty(packetBuffer + offset, outObject);
-                break;
-            }
-
-            case PropertyType::Cluster:
-            {
-                offset += processClusterProperty(packetBuffer + offset, outObject);
-                break;
-            }
-            }
-        }
-
-        return offset;
-    }
-
-    size_t DataBlob::processPointCloudProperty(const std::byte* buffer, ObjectPacket &object)
-    {
-        assert(!object.hasPointCloud());
-
-        auto& pointCloud = object.pointCloud.emplace();
-        
-        size_t offset = 0;
-
-        offset += ReadInt(buffer + offset, &pointCloud.pointsCount);
-        pointCloud.pointsPtr = buffer + offset;
-
-        return offset + (pointCloud.pointsCount * sizeof(float) * 4); 
-    }
-
-    size_t DataBlob::processClusterProperty(const std::byte* buffer, ObjectPacket &object)
-    {
-        assert(!object.hasCluster());
-
-        auto& cluster = object.cluster.emplace();
-
-        size_t offset = 0;
-
-        int stateInt;
-        offset += ReadInt(buffer + offset, &stateInt);
-        cluster.state = static_cast<ClusterState>(stateInt);
-
-        offset += ReadVector<float>(buffer + offset, cluster.centroid.data(), 3);
-        offset += ReadVector<float>(buffer + offset, cluster.velocity.data(), 3);
-        offset += ReadVector<float>(buffer + offset, cluster.boundingBoxCenter.data(), 3);
-        offset += ReadVector<float>(buffer + offset, cluster.boundingBoxSize.data(), 3);
-        offset += ReadVector<float>(buffer + offset, cluster.weight.data(), 3);
-
-        // TODO: This only works with quaternion mode
-        offset += ReadVector<float>(buffer + offset, cluster.boundingBoxRotation.data(), 4);
-
-        offset += ReadVector<float>(buffer + offset, cluster.lookAt.data(), 3);
-
-        return offset;
-    }
-
-    size_t DataBlob::processZonePacket(const std::byte* buffer, ZonePacket &outZone)
-    {
-        // TODO
-        return 0;
-    }
-
-    size_t DataBlob::processScenePacket(const std::byte* buffer, SceneInfoPacket &outScene)
-    {
-        // PacketType has already been read
-        size_t offset = 0;
-
-        int packetSize;
-        offset += ReadInt(buffer + offset, &packetSize);
-        offset += ReadInt(buffer + offset, &outScene.addressLength);
-        outScene.addressPtr = buffer + offset;
-        
-        return offset + (outScene.addressLength * sizeof(char));
+        return outMessage;
     }
 }

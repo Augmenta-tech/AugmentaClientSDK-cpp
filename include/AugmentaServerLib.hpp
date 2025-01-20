@@ -13,26 +13,22 @@ namespace AugmentaServerProtocol
         // TODO: Add doc !
     };
 
-    namespace ControlChannel
+    enum class BoundingBoxRotationMode
     {
-        class Handshake
-        {
-        };
-
-        class HandskaheResponse
-        {
-        };
-
-        class Update
-        {
-        };
-    }
+        Degrees,
+        Radians,
+        Quaternions,
+    };
 
     class DataBlob
     {
+        friend class DataBlobParser;
+
     public:
         class SceneInfoPacket
         {
+            friend class DataBlobParser;
+
         public:
             int getAddressLength() const { return addressLength; }
 
@@ -44,14 +40,14 @@ namespace AugmentaServerProtocol
             }
 
         private:
-            friend struct DataBlob;
-
             int addressLength;
             const std::byte *addressPtr = nullptr;
         };
 
         class ClusterProperty
         {
+            friend class DataBlobParser;
+
         public:
             ClusterState getState() const { return state; }
 
@@ -112,8 +108,6 @@ namespace AugmentaServerProtocol
             }
 
         private:
-            friend struct DataBlob;
-
             ClusterState state;
             std::array<float, 3> centroid;
             std::array<float, 3> velocity;
@@ -128,6 +122,8 @@ namespace AugmentaServerProtocol
 
         class PointCloudProperty
         {
+            friend class DataBlobParser;
+
         public:
             int getPointCount() const { return pointsCount; }
 
@@ -138,20 +134,20 @@ namespace AugmentaServerProtocol
                 std::memcpy(outData, pointsPtr, pointsCount * sizeof(Vector3f));
             }
 
-            float getPoint(size_t pointIdx, float* outPoint) const
+            float getPoint(size_t pointIdx, float *outPoint) const
             {
                 std::memcpy(outPoint, pointsPtr + (pointIdx * sizeof(float) * 3), 3);
             }
 
         private:
-            friend struct DataBlob;
-
             int pointsCount;
             const std::byte *pointsPtr;
         };
 
         class ObjectPacket
         {
+            friend class DataBlobParser;
+
         public:
             bool hasCluster() const { return cluster.has_value(); }
             const ClusterProperty &getCluster() const { return cluster.value(); }
@@ -162,8 +158,6 @@ namespace AugmentaServerProtocol
             int getID() const { return id; }
 
         private:
-            friend struct DataBlob;
-
             int id;
             std::optional<ClusterProperty> cluster;
             std::optional<PointCloudProperty> pointCloud;
@@ -172,9 +166,10 @@ namespace AugmentaServerProtocol
         // TODO
         class ZonePacket
         {
+            friend class DataBlobParser;
+
         public:
         private:
-            friend struct DataBlob;
         };
 
         size_t getObjectCount() const { return objects.size(); }
@@ -185,31 +180,100 @@ namespace AugmentaServerProtocol
 
         const SceneInfoPacket &getSceneInfo() const { return sceneInfo; }
 
-        static DataBlob parse(const std::byte *buffer, size_t bufferSize);
-
     private:
-        DataBlob(const std::byte *blob, size_t blobSize);
-
         SceneInfoPacket sceneInfo;
         std::vector<ObjectPacket> objects;
         std::vector<ZonePacket> zones;
-
-        size_t processPacket(const std::byte *packetBegin, size_t packetSize);
-
-        size_t processObjectPacket(const std::byte *packetBegin, ObjectPacket &outObject);
-        size_t processZonePacket(const std::byte *dataBegin, ZonePacket &outZone);
-        size_t processScenePacket(const std::byte *packetBegin, SceneInfoPacket &outZone);
-
-        size_t processPointCloudProperty(const std::byte *pointCloudBegin, ObjectPacket &object);
-        size_t processClusterProperty(const std::byte *clusterBegin, ObjectPacket &object);
     };
 
-    class ControlMessageParser
+    class ControlMessage
     {
+        friend class ControlMessageParser;
+
     public:
-        const std::string *message;
+        enum class Type
+        {
+            None,
+            Update,
+            Setup,
+        };
+
+        class Container
+        {
+            friend class ControlMessageParser;
+
+        public:
+            enum class Type
+            {
+                Unknown,
+                Container,
+                Zone,
+                Scene
+            };
+
+            bool isZone() const { return type == Container::Type::Zone; }
+            bool isScene() const { return type == Container::Type::Scene; }
+
+            bool hasChilren() { return !children.empty(); };
+
+            const std::string &getName() const { return name; }
+            const std::string &getAddress() const { return address; }
+            const std::array<float, 3> &getPosition() const { return position; };
+            const std::array<float, 3> &getRotation() const { return rotation; };
+            const std::array<float, 4> &getColor() const { return color; };
+
+            bool hasSizeProperty() const { return size.has_value(); }
+            const std::array<float, 3> &getSizeProperty() const { return size.value(); }
+
+        private:
+            Container::Type type = Type::Unknown;
+
+            std::vector<Container> children;
+
+            std::string name;
+            std::string address;
+            std::array<float, 3> position;
+            std::array<float, 3> rotation;
+            std::array<float, 4> color;
+
+            // Scene only
+            std::optional<std::array<float, 3>> size;
+
+            // TODO:
+            // ShapeObject/Zone only
+            // shape  "None", "Box", "Cylinder", "Sphere", "Path", "Grid", "Polygon", "Segment"
+            // TODO: Per-shape parameters
+        };
+
+        bool isUpdate() { return type == Type::Update; };
+        bool isSetup() { return type == Type::Setup; };
+
+        const Container &getContainer() const { return container; }
 
     private:
-        ControlMessageParser(const std::string &inMessage);
+        Type type = Type::None;
+        Container container;
+    };
+
+    // TODO
+    class Client
+    {
+    public:
+        const char *getHandShakeMessage();
+
+        // TODO: Might need to not be static
+        // in order to retain settings and do stuff accordingly (for example, reading 3 or 4 values rotations)
+        static DataBlob parseDataBlob(const std::byte *blob, size_t blobSize);
+        static ControlMessage parseControlMessage(const std::string &rawMessage);
+
+    private:
+        int protocolVersion = 2;
+        std::vector<std::string> tags;
+        bool streamClouds;
+        bool streamClusters;
+        bool streamClusterPoints;
+        int downSample;
+        BoundingBoxRotationMode boundingBoxRotationMode;
+        // TODO: Axis transform options
     };
 }
