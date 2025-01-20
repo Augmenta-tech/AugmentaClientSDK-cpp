@@ -79,25 +79,20 @@ namespace AugmentaServerProtocol
                 std::memcpy(out, boundingBoxSize.data(), sizeof(Vector3f));
             }
 
-            template <typename Vector3f>
-            void getWeight(Vector3f *out) const
-            {
-                static_assert(sizeof(Vector3f) == 12);
-                std::memcpy(out, weight.data(), sizeof(Vector3f));
-            }
+            float getWeight() const { return weight; }
 
             template <typename Vector3f>
             void getBoundingBoxRotationEuler(Vector3f *out) const
             {
                 static_assert(sizeof(Vector3f) == 12);
-                std::memcpy(out, rotation.data(), sizeof(Vector3f))
+                std::memcpy(out, boundingBoxRotation.data(), sizeof(Vector3f));
             }
 
             template <typename Vector4f>
             void getBoundingBoxRotationQuaternions(Vector4f *out) const
             {
                 static_assert(sizeof(Vector4f) == 16);
-                std::memcpy(out, rotation.data(), sizeof(Vector4f))
+                std::memcpy(out, boundingBoxRotation.data(), sizeof(Vector4f));
             }
 
             template <typename Vector3f>
@@ -113,7 +108,7 @@ namespace AugmentaServerProtocol
             std::array<float, 3> velocity;
             std::array<float, 3> boundingBoxCenter;
             std::array<float, 3> boundingBoxSize;
-            std::array<float, 3> weight;
+            float weight;
 
             std::array<float, 4> boundingBoxRotation;
 

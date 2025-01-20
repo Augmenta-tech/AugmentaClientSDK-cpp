@@ -7,10 +7,11 @@
 namespace
 {
     // Read an int from a byte buffer. Returns the number of bytes read.
-    static size_t ReadInt(const std::byte *buffer, int *out)
+    template<typename T>
+    static size_t ReadBinary(const std::byte *buffer, T *out)
     {
-        std::memcpy(out, buffer, sizeof(int));
-        return sizeof(int);
+        std::memcpy(out, buffer, sizeof(T));
+        return sizeof(T);
     }
 
     // Read a contiguous vector from a byte buffer. Returns the number of bytes read.
@@ -20,12 +21,6 @@ namespace
     {
         std::memcpy(out, buffer, elementCount * sizeof(T));
         return elementCount * sizeof(T);
-    }
-
-    static size_t ReadFloat(const std::vector<std::byte>::iterator &it, float *out)
-    {
-        std::memcpy(out, &(*it), sizeof(float));
-        return sizeof(float);
     }
 
     template <typename T>
@@ -100,7 +95,7 @@ namespace AugmentaServerProtocol
                 while (offset != packetSize)
                 {
                     int subPacketSize;
-                    ReadInt(packetBuffer + offset + sizeof(PacketType), &subPacketSize);
+                    ReadBinary(packetBuffer + offset + sizeof(PacketType), &subPacketSize);
 
                     auto subPacketBegin = packetBuffer + offset;
                     offset += processPacket(subPacketBegin, subPacketSize, outDataBlob);
@@ -144,18 +139,18 @@ namespace AugmentaServerProtocol
             size_t offset = 0;
 
             int packetSize;
-            offset += ReadInt(packetBuffer + offset, &packetSize);
+            offset += ReadBinary(packetBuffer + offset, &packetSize);
 
             int objectID;
-            offset += ReadInt(packetBuffer + offset, &outObject.id);
+            offset += ReadBinary(packetBuffer + offset, &outObject.id);
 
             while (offset != packetSize)
             {
                 int propertyID;
-                offset += ReadInt(packetBuffer + offset, &propertyID);
+                offset += ReadBinary(packetBuffer + offset, &propertyID);
 
                 int propertySize;
-                offset += ReadInt(packetBuffer + offset, &propertySize);
+                offset += ReadBinary(packetBuffer + offset, &propertySize);
 
                 switch (static_cast<PropertyType>(propertyID))
                 {
@@ -184,7 +179,7 @@ namespace AugmentaServerProtocol
 
             size_t offset = 0;
 
-            offset += ReadInt(buffer + offset, &pointCloud.pointsCount);
+            offset += ReadBinary(buffer + offset, &pointCloud.pointsCount);
             pointCloud.pointsPtr = buffer + offset;
 
             return offset + (pointCloud.pointsCount * sizeof(float) * 4);
@@ -199,14 +194,14 @@ namespace AugmentaServerProtocol
             size_t offset = 0;
 
             int stateInt;
-            offset += ReadInt(buffer + offset, &stateInt);
+            offset += ReadBinary(buffer + offset, &stateInt);
             cluster.state = static_cast<ClusterState>(stateInt);
 
             offset += ReadVector<float>(buffer + offset, cluster.centroid.data(), 3);
             offset += ReadVector<float>(buffer + offset, cluster.velocity.data(), 3);
             offset += ReadVector<float>(buffer + offset, cluster.boundingBoxCenter.data(), 3);
             offset += ReadVector<float>(buffer + offset, cluster.boundingBoxSize.data(), 3);
-            offset += ReadVector<float>(buffer + offset, cluster.weight.data(), 3);
+            offset += ReadBinary(buffer + offset, &cluster.weight);
 
             // TODO: This only works with quaternion mode
             offset += ReadVector<float>(buffer + offset, cluster.boundingBoxRotation.data(), 4);
@@ -228,8 +223,8 @@ namespace AugmentaServerProtocol
             size_t offset = 0;
 
             int packetSize;
-            offset += ReadInt(buffer + offset, &packetSize);
-            offset += ReadInt(buffer + offset, &outScene.addressLength);
+            offset += ReadBinary(buffer + offset, &packetSize);
+            offset += ReadBinary(buffer + offset, &outScene.addressLength);
             outScene.addressPtr = buffer + offset;
 
             return offset + (outScene.addressLength * sizeof(char));
