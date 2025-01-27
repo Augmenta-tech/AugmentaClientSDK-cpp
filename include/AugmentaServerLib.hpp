@@ -5,9 +5,35 @@
 #include <string>
 #include <array>
 #include <optional>
+#include <variant>
+#include <cassert>
 
 namespace AugmentaServerProtocol
 {
+    struct ProtocolOptions
+    {
+        enum class RotationMode
+        {
+            Radians,
+            Degrees,
+            Quaternions,
+        };
+
+        enum class AxisTransformMode
+        {
+            // TODO
+        };
+
+        int version = 2;
+        int downSample = 1;
+        bool streamClouds = true;
+        bool streamClusters = true;
+        bool streamClusterPoints = true;
+        bool streamZonePoints = false;
+        RotationMode boxRotationMode = RotationMode::Quaternions;
+        AxisTransformMode axisTransformMode; // TODO: Default ?
+    };
+
     enum class ClusterState : int
     {
         // TODO: Add doc !
@@ -187,9 +213,16 @@ namespace AugmentaServerProtocol
         friend class ControlMessageParser;
 
     public:
+        enum class Status
+        {
+            Unknown,
+            Ok,
+            Error,
+        };
+
         enum class Type
         {
-            None,
+            Unknown,
             Update,
             Setup,
         };
@@ -207,9 +240,89 @@ namespace AugmentaServerProtocol
                 Scene
             };
 
+            struct BoxShapeParameters
+            {
+                std::array<float, 3> size;
+            };
+
+            struct CylinderShapeParameters
+            {
+                float radius;
+                float height;
+            };
+
+            struct SphereShapeParameters
+            {
+                float radius;
+            };
+
+            struct PathShapeParameters
+            {
+            };
+
+            struct GridShapeParameters
+            {
+            };
+
+            struct PolygonShapeParameters
+            {
+            };
+
+            struct SegmentShapeParameters
+            {
+            };
+
+            enum class ShapeType
+            {
+                Unknown,
+                Box,
+                Cylinder,
+                Sphere,
+                Path,
+                Grid,
+                Polygon,
+                Segment,
+            };
+
+            struct ZoneParameters
+            {
+                ShapeType shapeType = ShapeType::Unknown;
+                std::variant<BoxShapeParameters,
+                             CylinderShapeParameters,
+                             SphereShapeParameters,
+                             PathShapeParameters,
+                             GridShapeParameters,
+                             PolygonShapeParameters,
+                             SegmentShapeParameters>
+                    shapeParameters;
+
+                ShapeType getShapeType() const { return shapeType; }
+
+                const BoxShapeParameters *getBoxShapeParameters() const { return getShapeParameters<BoxShapeParameters>(); }
+                const CylinderShapeParameters *getCylinderShapeParameters() const { return getShapeParameters<CylinderShapeParameters>(); }
+                const SphereShapeParameters *getSphereShapeParameters() const { return getShapeParameters<SphereShapeParameters>(); }
+                const PathShapeParameters *getPathShapeParameters() const { return getShapeParameters<PathShapeParameters>(); }
+                const GridShapeParameters *getGridShapeParameters() const { return getShapeParameters<GridShapeParameters>(); }
+                const PolygonShapeParameters *getPolygonShapeParameters() const { return getShapeParameters<PolygonShapeParameters>(); }
+                const SegmentShapeParameters *getSegmentShapeParameters() const { return getShapeParameters<SegmentShapeParameters>(); }
+
+            private:
+                template <typename T>
+                const T *getShapeParameters() const { return std::get_if<T>(&shapeParameters); }
+            };
+
+            struct SceneParameters
+            {
+                std::array<float, 3> size;
+            };
+
+            struct ContainerParameters
+            {
+            };
+
             bool isZone() const { return type == Container::Type::Zone; }
             bool isScene() const { return type == Container::Type::Scene; }
-
+            bool isContainer() const { return type == Container::Type::Container; }
             bool hasChilren() { return !children.empty(); };
 
             const std::string &getName() const { return name; }
@@ -218,58 +331,59 @@ namespace AugmentaServerProtocol
             const std::array<float, 3> &getRotation() const { return rotation; };
             const std::array<float, 4> &getColor() const { return color; };
 
-            bool hasSizeProperty() const { return size.has_value(); }
-            const std::array<float, 3> &getSizeProperty() const { return size.value(); }
+            const SceneParameters *getSceneParameters() const { return getParameters<SceneParameters>(); }
+            const ZoneParameters *getZoneParameters() const { return getParameters<ZoneParameters>(); }
+            const ContainerParameters *getContainerParameters() const { return getParameters<ContainerParameters>(); }
 
         private:
             Container::Type type = Type::Unknown;
 
+            // Common object properties
             std::vector<Container> children;
-
             std::string name;
             std::string address;
             std::array<float, 3> position;
             std::array<float, 3> rotation;
             std::array<float, 4> color;
 
-            // Scene only
-            std::optional<std::array<float, 3>> size;
+            // Per-type parameters
+            std::variant<SceneParameters, ZoneParameters, ContainerParameters> parameters;
 
-            // TODO:
-            // ShapeObject/Zone only
-            // shape  "None", "Box", "Cylinder", "Sphere", "Path", "Grid", "Polygon", "Segment"
-            // TODO: Per-shape parameters
+            template <typename T>
+            const T *getParameters() const { return std::get_if<T>(&parameters); }
         };
 
-        bool isUpdate() { return type == Type::Update; };
-        bool isSetup() { return type == Type::Setup; };
+        bool isUpdate() const { return type == Type::Update; };
+        bool isSetup() const { return type == Type::Setup; };
 
-        const Container &getContainer() const { return container; }
+        Status getStatus() const { return status; }
+        const std::string &getErrorMessage() const { return errorMessage; }
+        int getServerProtocolVersion() const { return serverProtocolVersion; }
+        const Container &getRootObject() const { return rootObject; }
 
     private:
-        Type type = Type::None;
-        Container container;
+        Type type = Type::Unknown;
+        Container rootObject;
+
+        Status status = Status::Unknown;
+        std::string errorMessage;
+        int serverProtocolVersion = 2;
     };
 
-    // TODO
     class Client
     {
     public:
+        void initialize(const ProtocolOptions &options);
+
         const char *getHandShakeMessage();
 
-        // TODO: Might need to not be static
-        // in order to retain settings and do stuff accordingly (for example, reading 3 or 4 values rotations)
-        static DataBlob parseDataBlob(const std::byte *blob, size_t blobSize);
-        static ControlMessage parseControlMessage(const std::string &rawMessage);
+        DataBlob parseDataBlob(const std::byte *blob, size_t blobSize);
+        ControlMessage parseControlMessage(const char *rawMessage);
 
     private:
-        int protocolVersion = 2;
+        bool initialized = false;
+
         std::vector<std::string> tags;
-        bool streamClouds;
-        bool streamClusters;
-        bool streamClusterPoints;
-        int downSample;
-        BoundingBoxRotationMode boundingBoxRotationMode;
-        // TODO: Axis transform options
+        ProtocolOptions options;
     };
 }

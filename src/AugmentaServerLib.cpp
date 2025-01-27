@@ -7,7 +7,7 @@
 namespace
 {
     // Read an int from a byte buffer. Returns the number of bytes read.
-    template<typename T>
+    template <typename T>
     static size_t ReadBinary(const std::byte *buffer, T *out)
     {
         std::memcpy(out, buffer, sizeof(T));
@@ -81,46 +81,48 @@ namespace AugmentaServerProtocol
             Cluster = 1,
         };
 
-        static size_t processPacket(const std::byte *packetBuffer, size_t packetSize, DataBlob &outDataBlob)
+        static size_t processPacket(const std::byte *packetBuffer, DataBlob &outDataBlob, const ProtocolOptions &options)
         {
             size_t offset = 0;
 
-            PacketType type = static_cast<PacketType>(*packetBuffer);
-            offset += 1;
+            int packetSize;
+            offset += ReadBinary(packetBuffer, &packetSize);
+
+            PacketType type;
+            offset += ReadBinary(packetBuffer + offset, &type);
 
             switch (type)
             {
             case PacketType::Bundle:
             {
-                while (offset != packetSize)
+                int packetCount;
+                offset += ReadBinary(packetBuffer + offset, &packetCount);
+
+                for (int packetIdx = 0; packetIdx < packetCount; ++packetIdx)
                 {
-                    int subPacketSize;
-                    ReadBinary(packetBuffer + offset + sizeof(PacketType), &subPacketSize);
-
                     auto subPacketBegin = packetBuffer + offset;
-                    offset += processPacket(subPacketBegin, subPacketSize, outDataBlob);
+                    offset += processPacket(subPacketBegin, outDataBlob, options);
                 }
-
                 break;
             }
 
             case PacketType::Object:
             {
                 auto &object = outDataBlob.objects.emplace_back();
-                offset += processObjectPacket(packetBuffer + offset, object);
+                offset += processObjectPacket(packetBuffer, object, options);
                 break;
             }
 
             case PacketType::Zone:
             {
                 auto &zone = outDataBlob.zones.emplace_back();
-                offset += processZonePacket(packetBuffer + offset, zone);
+                offset += processZonePacket(packetBuffer, zone, options);
                 break;
             }
 
             case PacketType::Scene:
             {
-                offset += processScenePacket(packetBuffer + offset, outDataBlob.sceneInfo);
+                offset += processScenePacket(packetBuffer + offset, outDataBlob.sceneInfo, options);
                 break;
             }
 
@@ -133,36 +135,36 @@ namespace AugmentaServerProtocol
             return offset;
         }
 
-        static size_t processObjectPacket(const std::byte *packetBuffer, DataBlob::ObjectPacket &outObject)
+        static size_t processObjectPacket(const std::byte *packetBuffer, DataBlob::ObjectPacket &outObject, const ProtocolOptions &options)
         {
-            // At this point packetType has already been read
+            // At this point packetSize and packetType have already been read
             size_t offset = 0;
-
-            int packetSize;
-            offset += ReadBinary(packetBuffer + offset, &packetSize);
 
             int objectID;
             offset += ReadBinary(packetBuffer + offset, &outObject.id);
 
-            while (offset != packetSize)
-            {
-                int propertyID;
-                offset += ReadBinary(packetBuffer + offset, &propertyID);
+            int propertiesCount;
+            offset += ReadBinary(packetBuffer + offset, &propertiesCount);
 
+            for (int propertyIdx = 0; propertyIdx < propertiesCount; ++propertyIdx)
+            {
                 int propertySize;
                 offset += ReadBinary(packetBuffer + offset, &propertySize);
 
-                switch (static_cast<PropertyType>(propertyID))
+                PropertyType propertyID;
+                offset += ReadBinary(packetBuffer + offset, &propertyID);
+
+                switch (propertyID)
                 {
                 case PropertyType::Points:
                 {
-                    offset += processPointCloudProperty(packetBuffer + offset, outObject);
+                    offset += processPointCloudProperty(packetBuffer + offset, outObject, options);
                     break;
                 }
 
                 case PropertyType::Cluster:
                 {
-                    offset += processClusterProperty(packetBuffer + offset, outObject);
+                    offset += processClusterProperty(packetBuffer + offset, outObject, options);
                     break;
                 }
                 }
@@ -171,59 +173,62 @@ namespace AugmentaServerProtocol
             return offset;
         }
 
-        static size_t processPointCloudProperty(const std::byte *buffer, DataBlob::ObjectPacket &object)
+        static size_t processPointCloudProperty(const std::byte *buffer, DataBlob::ObjectPacket &object, const ProtocolOptions &options)
         {
             assert(!object.hasPointCloud());
 
             auto &pointCloud = object.pointCloud.emplace();
 
+            // Size and ID have already been read
             size_t offset = 0;
 
             offset += ReadBinary(buffer + offset, &pointCloud.pointsCount);
             pointCloud.pointsPtr = buffer + offset;
 
-            return offset + (pointCloud.pointsCount * sizeof(float) * 4);
+            return offset + (pointCloud.pointsCount * sizeof(float) * 3);
         }
 
-        static size_t processClusterProperty(const std::byte *buffer, DataBlob::ObjectPacket &object)
+        static size_t processClusterProperty(const std::byte *buffer, DataBlob::ObjectPacket &object, const ProtocolOptions &options)
         {
             assert(!object.hasCluster());
 
             auto &cluster = object.cluster.emplace();
 
+            // Size and ID have already been read
             size_t offset = 0;
 
-            int stateInt;
-            offset += ReadBinary(buffer + offset, &stateInt);
-            cluster.state = static_cast<ClusterState>(stateInt);
-
+            offset += ReadBinary(buffer + offset, &(cluster.state));
             offset += ReadVector<float>(buffer + offset, cluster.centroid.data(), 3);
             offset += ReadVector<float>(buffer + offset, cluster.velocity.data(), 3);
             offset += ReadVector<float>(buffer + offset, cluster.boundingBoxCenter.data(), 3);
             offset += ReadVector<float>(buffer + offset, cluster.boundingBoxSize.data(), 3);
             offset += ReadBinary(buffer + offset, &cluster.weight);
 
-            // TODO: This only works with quaternion mode
-            offset += ReadVector<float>(buffer + offset, cluster.boundingBoxRotation.data(), 4);
+            if (options.boxRotationMode == ProtocolOptions::RotationMode::Quaternions)
+            {
+                offset += ReadVector<float>(buffer + offset, cluster.boundingBoxRotation.data(), 4);
+            }
+            else
+            {
+                offset += ReadVector<float>(buffer + offset, cluster.boundingBoxRotation.data(), 3);
+            }
 
             offset += ReadVector<float>(buffer + offset, cluster.lookAt.data(), 3);
 
             return offset;
         }
 
-        static size_t processZonePacket(const std::byte *buffer, DataBlob::ZonePacket &outZone)
+        static size_t processZonePacket(const std::byte *buffer, DataBlob::ZonePacket &outZone, const ProtocolOptions &options)
         {
             // TODO
             return 0;
         }
 
-        static size_t processScenePacket(const std::byte *buffer, DataBlob::SceneInfoPacket &outScene)
+        static size_t processScenePacket(const std::byte *buffer, DataBlob::SceneInfoPacket &outScene, const ProtocolOptions &options)
         {
-            // PacketType has already been read
+            // Packet size and ID have already been read
             size_t offset = 0;
 
-            int packetSize;
-            offset += ReadBinary(buffer + offset, &packetSize);
             offset += ReadBinary(buffer + offset, &outScene.addressLength);
             outScene.addressPtr = buffer + offset;
 
@@ -235,8 +240,6 @@ namespace AugmentaServerProtocol
     {
         static void parseContainer(const nlohmann::json &containerJson, ControlMessage::Container &outContainer)
         {
-            // TODO: replace with optionnals ?
-            // TODO: What *is* optionnal, and what isn't ?
             outContainer.address = containerJson.value("address", "");
             outContainer.name = containerJson.value("name", "");
             outContainer.position = ReadJSON<std::array<float, 3>>(containerJson, "position", {0, 0, 0});
@@ -247,19 +250,58 @@ namespace AugmentaServerProtocol
             if (typeJson != containerJson.end())
             {
                 const std::string &typeStr = *typeJson;
-                if (typeStr == "Zone")
+                if (typeStr == "Shape")
                 {
                     outContainer.type = ControlMessage::Container::Type::Zone;
-                    // TODO
+                    auto &parameters = outContainer.parameters.emplace<ControlMessage::Container::ZoneParameters>();
+
+                    auto shapeJson = containerJson["shape"];
+                    auto shapeType = shapeJson["shape"];
+
+                    if (shapeType == "Box")
+                    {
+                        auto &shapeParameters = parameters.shapeParameters.emplace<ControlMessage::Container::BoxShapeParameters>();
+                        shapeParameters.size = ReadJSON<std::array<float, 3>>(shapeJson, "size", {0, 0, 0});
+                    }
+                    else if (shapeType == "Cylinder")
+                    {
+                        auto &shapeParameters = parameters.shapeParameters.emplace<ControlMessage::Container::CylinderShapeParameters>();
+                        shapeParameters.height = shapeJson["height"];
+                        shapeParameters.radius = shapeJson["radius"];
+                    }
+                    else if (shapeType == "Sphere")
+                    {
+                        auto &shapeParameters = parameters.shapeParameters.emplace<ControlMessage::Container::SphereShapeParameters>();
+                        shapeParameters.radius = shapeJson["radius"];
+                    }
+                    else if (shapeType == "Path")
+                    {
+                        auto &shapeParameters = parameters.shapeParameters.emplace<ControlMessage::Container::PathShapeParameters>();
+                    }
+                    else if (shapeType == "Grid")
+                    {
+                        auto &shapeParameters = parameters.shapeParameters.emplace<ControlMessage::Container::GridShapeParameters>();
+                    }
+                    else if (shapeType == "Polygon")
+                    {
+                        auto &shapeParameters = parameters.shapeParameters.emplace<ControlMessage::Container::PolygonShapeParameters>();
+                    }
+                    else if (shapeType == "Segment")
+                    {
+                        auto &shapeParameters = parameters.shapeParameters.emplace<ControlMessage::Container::SegmentShapeParameters>();
+                    }
                 }
                 else if (typeStr == "Scene")
                 {
                     outContainer.type = ControlMessage::Container::Type::Scene;
-                    outContainer.size = ReadJSON<std::array<float, 3>>(containerJson, "size", {0, 0, 0});
+
+                    auto &parameters = outContainer.parameters.emplace<ControlMessage::Container::SceneParameters>();
+                    parameters.size = ReadJSON<std::array<float, 3>>(containerJson, "size", {0, 0, 0});
                 }
                 else // Container
                 {
                     outContainer.type = ControlMessage::Container::Type::Container;
+                    auto &parameters = outContainer.parameters.emplace<ControlMessage::Container::ContainerParameters>();
                 }
             }
 
@@ -276,43 +318,62 @@ namespace AugmentaServerProtocol
 
         static void parseControlMessage(const nlohmann::json &messageJson, ControlMessage &outMessage)
         {
-            if (messageJson.contains("status"))
+            auto status = messageJson.value("status", "");
+            if (status == "ok")
             {
-                if (messageJson["status"] == "ok")
-                {
-                    if (messageJson.contains("setup"))
-                    {
-                        outMessage.type = ControlMessage::Type::Setup;
-                        const auto &setupJson = messageJson["setup"];
-                        ControlMessageParser::parseContainer(setupJson, outMessage.container);
-                    }
-                }
+                outMessage.status = ControlMessage::Status::Ok;
             }
-            else if (messageJson.contains("update"))
+            else if (status == "error")
+            {
+                outMessage.status = ControlMessage::Status::Error;
+                outMessage.errorMessage = messageJson.value("error", "");
+            }
+
+            outMessage.serverProtocolVersion = messageJson.value("version", 1);
+
+            auto setupIt = messageJson.find("setup");
+            if (setupIt != messageJson.end())
+            {
+                outMessage.type = ControlMessage::Type::Setup;
+                ControlMessageParser::parseContainer(*setupIt, outMessage.rootObject);
+            }
+
+            auto updateIt = messageJson.find("update");
+            if (updateIt != messageJson.end())
             {
                 outMessage.type = ControlMessage::Type::Update;
-                const auto &updateJson = messageJson["update"];
-                ControlMessageParser::parseContainer(updateJson, outMessage.container);
+                ControlMessageParser::parseContainer(*updateIt, outMessage.rootObject);
             }
         }
     };
 
+    void Client::initialize(const ProtocolOptions &desiredOptions)
+    {
+        options = desiredOptions;
+        initialized = true;
+    }
+
     DataBlob Client::parseDataBlob(const std::byte *buffer, size_t bufferSize)
     {
+        assert(initialized);
+
         if (isBigEndian())
         {
             throw(std::runtime_error("The system appears to be big endian, while only little endian is supported."));
         }
 
         DataBlob blob;
-        DataBlobParser::processPacket(buffer, bufferSize, blob);
+        DataBlobParser::processPacket(buffer, blob, options);
 
         return blob;
     }
 
-    ControlMessage Client::parseControlMessage(const std::string &rawMessage)
+    ControlMessage Client::parseControlMessage(const char *rawMessage)
     {
+        assert(initialized);
+
         auto messageJson = nlohmann::json::parse(rawMessage);
+
         ControlMessage outMessage;
         ControlMessageParser::parseControlMessage(messageJson, outMessage);
 
