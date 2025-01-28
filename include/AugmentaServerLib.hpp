@@ -78,54 +78,74 @@ namespace AugmentaServerProtocol
             ClusterState getState() const { return state; }
 
             template <typename Vector3f>
-            void getCentroid(Vector3f *outCentroid) const
+            Vector3f getCentroid() const
             {
                 static_assert(sizeof(Vector3f) == 12);
-                std::memcpy(outCentroid, centroid.data(), sizeof(Vector3f));
+
+                Vector3f outValue;
+                std::memcpy(&outValue, centroid.data(), sizeof(Vector3f));
+                return outValue;
             }
 
             template <typename Vector3f>
-            void getVelocity(Vector3f *outVelocity) const
+            Vector3f getVelocity() const
             {
                 static_assert(sizeof(Vector3f) == 12);
-                std::memcpy(outVelocity, velocity.data(), sizeof(Vector3f));
+
+                Vector3f outValue;
+                std::memcpy(&outValue, velocity.data(), sizeof(Vector3f));
+                return outValue;
             }
 
             template <typename Vector3f>
-            void getBoundingBoxCenter(Vector3f *outBoundingBoxCenter) const
+            Vector3f getBoundingBoxCenter() const
             {
                 static_assert(sizeof(Vector3f) == 12);
-                std::memcpy(outBoundingBoxCenter, boundingBoxCenter.data(), sizeof(Vector3f));
+
+                Vector3f outValue;
+                std::memcpy(&outValue, boundingBoxCenter.data(), sizeof(Vector3f));
+                return outValue;
             }
 
             template <typename Vector3f>
-            void getBoundingBoxSize(Vector3f *out) const
+            Vector3f getBoundingBoxSize() const
             {
                 static_assert(sizeof(Vector3f) == 12);
-                std::memcpy(out, boundingBoxSize.data(), sizeof(Vector3f));
+
+                Vector3f outValue;
+                std::memcpy(&outValue, boundingBoxSize.data(), sizeof(Vector3f));
+                return outValue;
             }
 
             float getWeight() const { return weight; }
 
             template <typename Vector3f>
-            void getBoundingBoxRotationEuler(Vector3f *out) const
+            Vector3f getBoundingBoxRotationEuler() const
             {
                 static_assert(sizeof(Vector3f) == 12);
-                std::memcpy(out, boundingBoxRotation.data(), sizeof(Vector3f));
+
+                Vector3f outValue;
+                std::memcpy(&outValue, boundingBoxRotation.data(), sizeof(Vector3f));
+                return outValue;
             }
 
             template <typename Vector4f>
-            void getBoundingBoxRotationQuaternions(Vector4f *out) const
+            Vector4f getBoundingBoxRotationQuaternions() const
             {
                 static_assert(sizeof(Vector4f) == 16);
-                std::memcpy(out, boundingBoxRotation.data(), sizeof(Vector4f));
+
+                Vector4f outValue;
+                std::memcpy(&outValue, boundingBoxRotation.data(), sizeof(Vector4f));
+                return outValue;
             }
 
             template <typename Vector3f>
-            void getLookAt(Vector3f *out) const
+            Vector3f getLookAt() const
             {
                 static_assert(sizeof(Vector3f) == 12);
-                std::memcpy(out, lookAt.data(), sizeof(Vector3f));
+                Vector3f outValue;
+                std::memcpy(&outValue, lookAt.data(), sizeof(Vector3f));
+                return outValue;
             }
 
         private:
@@ -148,6 +168,7 @@ namespace AugmentaServerProtocol
         public:
             int getPointCount() const { return pointsCount; }
 
+            // Copy the all cloud points at once. outData should be a contiguous container of Vector3f type (3*float = 12 bytes)
             template <typename Vector3f>
             void getPointsData(Vector3f *outData) const
             {
@@ -156,9 +177,14 @@ namespace AugmentaServerProtocol
             }
 
             // Return the point (Vec3f) at a given idx. Prefer copying all point data at once if you can.
-            void getPoint(size_t pointIdx, float *outPoint) const
+            template<typename Vector3f>
+            Vector3f getPoint(size_t pointIdx) const
             {
-                std::memcpy(outPoint, pointsPtr + (pointIdx * sizeof(float) * 3), 3);
+                static_assert(sizeof(Vector3f) == 12);
+
+                Vector3f outPoint; 
+                std::memcpy(&outPoint, pointsPtr + (pointIdx * sizeof(Vector3f)), 3);
+                return outPoint;
             }
 
         private:
