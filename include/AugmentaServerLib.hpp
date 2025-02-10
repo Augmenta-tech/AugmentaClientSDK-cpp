@@ -403,6 +403,7 @@ namespace AugmentaServerProtocol
     public:
         void initialize(const ProtocolOptions &options);
 
+        std::string getHandShakeMessage() const;
         std::string getPollMessage() const;
 
         DataBlob parseDataBlob(const std::byte *blob, size_t blobSize);

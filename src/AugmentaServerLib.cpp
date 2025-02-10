@@ -7,6 +7,13 @@
 
 namespace
 {
+    const std::unordered_map<AugmentaServerProtocol::ProtocolOptions::RotationMode, std::string> rotationModeNames = 
+    {
+        {AugmentaServerProtocol::ProtocolOptions::RotationMode::Degrees, "Degrees"},
+        {AugmentaServerProtocol::ProtocolOptions::RotationMode::Radians, "Radians"},
+        {AugmentaServerProtocol::ProtocolOptions::RotationMode::Quaternions, "Quaternions"},
+    };
+
     // Read an int from a byte buffer. Returns the number of bytes read.
     template <typename T>
     static size_t ReadBinary(const std::byte *buffer, T *out)
@@ -398,6 +405,28 @@ namespace AugmentaServerProtocol
         ControlMessageParser::parseControlMessage(messageJson, outMessage);
 
         return outMessage;
+    }
+
+    std::string Client::getHandShakeMessage() const
+    {
+        assert(initialized);
+
+        nlohmann::json handshakeJson;
+        handshakeJson["version"] = options.version;
+        // TODO: Tags
+        handshakeJson["streamClouds"] = options.streamClouds;
+        handshakeJson["streamClusters"] = options.streamClusters;
+        handshakeJson["streamClusterPoints"] = options.streamClusterPoints;
+        handshakeJson["downSample"] = options.downSample;
+        handshakeJson["boxRotationMode"] = rotationModeNames.at(options.boxRotationMode);
+        handshakeJson["useCompression"] = options.useCompression;
+        handshakeJson["usePolling"] = options.usePolling;
+
+        nlohmann::json axisTransformJson;
+        // TODO...
+        handshakeJson["axisTransform"] = axisTransformJson;
+
+        return handshakeJson.dump();
     }
 
     std::string Client::getPollMessage() const
