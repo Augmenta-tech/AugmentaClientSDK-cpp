@@ -33,6 +33,7 @@ namespace AugmentaServerProtocol
         RotationMode boxRotationMode = RotationMode::Quaternions;
         AxisTransformMode axisTransformMode; // TODO: Default ?
         bool useCompression = true;
+        bool usePolling = false; 
     };
 
     enum class ClusterState : int
@@ -402,7 +403,7 @@ namespace AugmentaServerProtocol
     public:
         void initialize(const ProtocolOptions &options);
 
-        const char *getHandShakeMessage();
+        std::string getPollMessage() const;
 
         DataBlob parseDataBlob(const std::byte *blob, size_t blobSize);
         ControlMessage parseControlMessage(const char *rawMessage);

@@ -399,4 +399,14 @@ namespace AugmentaServerProtocol
 
         return outMessage;
     }
+
+    std::string Client::getPollMessage() const
+    {
+        assert(initialized);
+        assert(options.usePolling);
+
+        nlohmann::json pollJson;
+        pollJson["poll"] = true;
+        return pollJson.dump();
+    }
 }
