@@ -7,11 +7,11 @@
 
 namespace
 {
-    const std::unordered_map<AugmentaServerProtocol::ProtocolOptions::RotationMode, std::string> rotationModeNames = 
-    {
-        {AugmentaServerProtocol::ProtocolOptions::RotationMode::Degrees, "Degrees"},
-        {AugmentaServerProtocol::ProtocolOptions::RotationMode::Radians, "Radians"},
-        {AugmentaServerProtocol::ProtocolOptions::RotationMode::Quaternions, "Quaternions"},
+    const std::unordered_map<AugmentaServerProtocol::ProtocolOptions::RotationMode, std::string> rotationModeNames =
+        {
+            {AugmentaServerProtocol::ProtocolOptions::RotationMode::Degrees, "Degrees"},
+            {AugmentaServerProtocol::ProtocolOptions::RotationMode::Radians, "Radians"},
+            {AugmentaServerProtocol::ProtocolOptions::RotationMode::Quaternions, "Quaternions"},
     };
 
     // Read an int from a byte buffer. Returns the number of bytes read.
@@ -228,8 +228,58 @@ namespace AugmentaServerProtocol
 
         static size_t processZonePacket(const std::byte *buffer, DataBlob::ZonePacket &outZone, const ProtocolOptions &options)
         {
-            // TODO
-            return 0;
+            size_t offset = 0;
+
+            // Size and type have already been read
+            int controlIDSize;
+            offset += ReadBinary(buffer, &controlIDSize);
+
+            outZone.controlID.resize(controlIDSize);
+            offset += ReadVector<char>(buffer, outZone.controlID.data(), controlIDSize);
+
+            offset += ReadBinary(buffer, &outZone.enters);
+            offset += ReadBinary(buffer, &outZone.leaves);
+            offset += ReadBinary(buffer, &outZone.presence);
+            offset += ReadBinary(buffer, &outZone.density);
+
+            // TODO: Count is not necessary
+            int count;
+            offset += ReadBinary(buffer, &count);
+
+            // Size neither
+            int size;
+            offset += ReadBinary(buffer, &size);
+
+            offset += ReadBinary(buffer, &outZone.type);
+
+            switch (outZone.type)
+            {
+            case DataBlob::ZonePacket::Type::Slider:
+            {
+                auto &data = outZone.extraData.emplace<DataBlob::ZonePacket::Slider>();
+                offset += ReadBinary(buffer, &data.value);
+                break;
+            }
+            case DataBlob::ZonePacket::Type::XYPad:
+            {
+                auto &data = outZone.extraData.emplace<DataBlob::ZonePacket::XYPad>();
+                offset += ReadBinary(buffer, &data.x);
+                offset += ReadBinary(buffer, &data.y);
+                break;
+            }
+            case DataBlob::ZonePacket::Type::PointCloud:
+            {
+                auto& data = outZone.extraData.emplace<DataBlob::PointCloudProperty>();
+                offset += ReadBinary(buffer, &data.pointsCount);
+                data.pointsPtr = buffer + offset;
+                offset += data.pointsCount * sizeof(float) * 3;
+                break;
+            }
+            default:
+                throw(std::runtime_error("Unknown zone type encountered."));
+            }
+
+            return offset;
         }
 
         static size_t processScenePacket(const std::byte *buffer, DataBlob::SceneInfoPacket &outScene, const ProtocolOptions &options)
@@ -370,7 +420,7 @@ namespace AugmentaServerProtocol
             throw(std::runtime_error("The system appears to be big endian, while only little endian is supported."));
         }
 
-        const std::byte* dataBuffer = buffer;
+        const std::byte *dataBuffer = buffer;
 
         if (options.useCompression)
         {
@@ -381,7 +431,7 @@ namespace AugmentaServerProtocol
             {
                 throw std::runtime_error("Error during data blob decompression.");
             }
-            
+
             uncompressedBuffer.resize(uncompressedSize);
             size_t actualSize = ZSTD_decompress(uncompressedBuffer.data(), uncompressedSize, buffer, bufferSize);
             uncompressedBuffer.resize(actualSize); // Shrink back if necessary

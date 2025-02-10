@@ -33,7 +33,7 @@ namespace AugmentaServerProtocol
         RotationMode boxRotationMode = RotationMode::Quaternions;
         AxisTransformMode axisTransformMode; // TODO: Default ?
         bool useCompression = true;
-        bool usePolling = false; 
+        bool usePolling = false;
     };
 
     enum class ClusterState : int
@@ -179,12 +179,12 @@ namespace AugmentaServerProtocol
             }
 
             // Return the point (Vec3f) at a given idx. Prefer copying all point data at once if you can.
-            template<typename Vector3f>
+            template <typename Vector3f>
             Vector3f getPoint(size_t pointIdx) const
             {
                 static_assert(sizeof(Vector3f) == 12);
 
-                Vector3f outPoint; 
+                Vector3f outPoint;
                 std::memcpy(&outPoint, pointsPtr + (pointIdx * sizeof(Vector3f)), 3);
                 return outPoint;
             }
@@ -213,13 +213,63 @@ namespace AugmentaServerProtocol
             std::optional<PointCloudProperty> pointCloud;
         };
 
-        // TODO
         class ZonePacket
         {
             friend class DataBlobParser;
 
         public:
+            enum class Type : int
+            {
+                Unknown = -1,
+                Slider = 0,
+                XYPad = 1,
+                PointCloud = 2,
+
+            };
+
+            class Slider
+            {
+                friend class DataBlobParser;
+
+            public:
+                float getValue() const { return value; }
+
+            private:
+                float value;
+            };
+
+            class XYPad
+            {
+                friend class DataBlobParser;
+
+            public:
+                float getX() const { return x; }
+                float getY() const { return y; }
+
+            private:
+                float x;
+                float y;
+            };
+
+        public:
+            const std::string &getControlID() const { return controlID; }
+            Type getType() const { return type; }
+            uint8_t getEnters() const { return enters; }
+            uint8_t getLeaves() const { return leaves; }
+            int getPresence() const { return presence; }
+            float getDensity() const { return density; }
+
+            template <typename T>
+            const T *getExtraData() const { return std::get_if<T>(&extraData); }
+
         private:
+            std::string controlID;
+            Type type;
+            uint8_t enters;
+            uint8_t leaves;
+            int presence;
+            float density;
+            std::variant<Slider, XYPad, PointCloudProperty> extraData;
         };
 
         size_t getObjectCount() const { return objects.size(); }
