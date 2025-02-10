@@ -218,16 +218,7 @@ namespace AugmentaServerProtocol
             friend class DataBlobParser;
 
         public:
-            enum class Type : int
-            {
-                Unknown = -1,
-                Slider = 0,
-                XYPad = 1,
-                PointCloud = 2,
-
-            };
-
-            class Slider
+            class SliderProperty
             {
                 friend class DataBlobParser;
 
@@ -238,7 +229,7 @@ namespace AugmentaServerProtocol
                 float value;
             };
 
-            class XYPad
+            class XYPadProperty
             {
                 friend class DataBlobParser;
 
@@ -251,25 +242,47 @@ namespace AugmentaServerProtocol
                 float y;
             };
 
+            class Property
+            {
+                friend class DataBlobParser;
+
+            public:
+                enum class Type : int
+                {
+                    Unknown = -1,
+                    Slider = 0,
+                    XYPad = 1,
+                    PointCloud = 2,
+
+                };
+
+            public:
+                Type getType() const { return type; }
+
+                template <typename T>
+                const T *getExtraData() const { return std::get_if<T>(&data); }
+
+            private:
+                Type type = Type::Unknown;
+                std::variant<SliderProperty, XYPadProperty, PointCloudProperty> data;
+            };
+
         public:
             const std::string &getControlID() const { return controlID; }
-            Type getType() const { return type; }
             uint8_t getEnters() const { return enters; }
             uint8_t getLeaves() const { return leaves; }
             int getPresence() const { return presence; }
             float getDensity() const { return density; }
-
-            template <typename T>
-            const T *getExtraData() const { return std::get_if<T>(&extraData); }
+            int getPropertiesCount() const { return properties.size(); }
+            const std::vector<Property>& getProperties() const { return properties; }
 
         private:
             std::string controlID;
-            Type type;
             uint8_t enters;
             uint8_t leaves;
             int presence;
             float density;
-            std::variant<Slider, XYPad, PointCloudProperty> extraData;
+            std::vector<Property> properties;
         };
 
         size_t getObjectCount() const { return objects.size(); }

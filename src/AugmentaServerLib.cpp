@@ -242,41 +242,42 @@ namespace AugmentaServerProtocol
             offset += ReadBinary(buffer, &outZone.presence);
             offset += ReadBinary(buffer, &outZone.density);
 
-            // TODO: Count is not necessary
-            int count;
-            offset += ReadBinary(buffer, &count);
+            int propertiesCount;
+            offset += ReadBinary(buffer, &propertiesCount);
 
-            // Size neither
-            int size;
-            offset += ReadBinary(buffer, &size);
+            for (int propertyIdx = 0; propertyIdx < propertiesCount; ++propertyIdx)
+            {
+                auto& property = outZone.properties.emplace_back();
 
-            offset += ReadBinary(buffer, &outZone.type);
+                offset += sizeof(int); // Skip size
+                offset += ReadBinary(buffer, &property.type);
 
-            switch (outZone.type)
-            {
-            case DataBlob::ZonePacket::Type::Slider:
-            {
-                auto &data = outZone.extraData.emplace<DataBlob::ZonePacket::Slider>();
-                offset += ReadBinary(buffer, &data.value);
-                break;
-            }
-            case DataBlob::ZonePacket::Type::XYPad:
-            {
-                auto &data = outZone.extraData.emplace<DataBlob::ZonePacket::XYPad>();
-                offset += ReadBinary(buffer, &data.x);
-                offset += ReadBinary(buffer, &data.y);
-                break;
-            }
-            case DataBlob::ZonePacket::Type::PointCloud:
-            {
-                auto& data = outZone.extraData.emplace<DataBlob::PointCloudProperty>();
-                offset += ReadBinary(buffer, &data.pointsCount);
-                data.pointsPtr = buffer + offset;
-                offset += data.pointsCount * sizeof(float) * 3;
-                break;
-            }
-            default:
-                throw(std::runtime_error("Unknown zone type encountered."));
+                switch (property.type)
+                {
+                case DataBlob::ZonePacket::Property::Type::Slider:
+                {
+                    auto &data = property.data.emplace<DataBlob::ZonePacket::SliderProperty>();
+                    offset += ReadBinary(buffer, &data.value);
+                    break;
+                }
+                case DataBlob::ZonePacket::Property::Type::XYPad:
+                {
+                    auto &data = property.data.emplace<DataBlob::ZonePacket::XYPadProperty>();
+                    offset += ReadBinary(buffer, &data.x);
+                    offset += ReadBinary(buffer, &data.y);
+                    break;
+                }
+                case DataBlob::ZonePacket::Property::Type::PointCloud:
+                {
+                    auto &data = property.data.emplace<DataBlob::PointCloudProperty>();
+                    offset += ReadBinary(buffer, &data.pointsCount);
+                    data.pointsPtr = buffer + offset;
+                    offset += data.pointsCount * sizeof(float) * 3;
+                    break;
+                }
+                default:
+                    throw(std::runtime_error("Unknown zone property type encountered."));
+                }
             }
 
             return offset;
