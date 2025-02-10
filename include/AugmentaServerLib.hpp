@@ -32,6 +32,7 @@ namespace AugmentaServerProtocol
         bool streamZonePoints = false;
         RotationMode boxRotationMode = RotationMode::Quaternions;
         AxisTransformMode axisTransformMode; // TODO: Default ?
+        bool useCompression = true;
     };
 
     enum class ClusterState : int
@@ -411,5 +412,7 @@ namespace AugmentaServerProtocol
 
         std::vector<std::string> tags;
         ProtocolOptions options;
+
+        std::vector<std::byte> uncompressedBuffer;
     };
 }

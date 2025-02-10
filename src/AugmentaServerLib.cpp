@@ -2,7 +2,8 @@
 
 #include "AugmentaServerLib.hpp"
 
-#include "json.hpp"
+#include <json.hpp>
+#include <zstd.h>
 
 namespace
 {
@@ -362,8 +363,27 @@ namespace AugmentaServerProtocol
             throw(std::runtime_error("The system appears to be big endian, while only little endian is supported."));
         }
 
+        const std::byte* dataBuffer = buffer;
+
+        if (options.useCompression)
+        {
+            // Decompress
+            size_t uncompressedSize = ZSTD_getFrameContentSize(buffer, bufferSize);
+
+            if (ZSTD_isError(uncompressedSize))
+            {
+                throw std::runtime_error("Error during data blob decompression.");
+            }
+            
+            uncompressedBuffer.resize(uncompressedSize);
+            size_t actualSize = ZSTD_decompress(uncompressedBuffer.data(), uncompressedSize, buffer, bufferSize);
+            uncompressedBuffer.resize(actualSize); // Shrink back if necessary
+
+            dataBuffer = uncompressedBuffer.data();
+        };
+
         DataBlob blob;
-        DataBlobParser::processPacket(buffer, blob, options);
+        DataBlobParser::processPacket(dataBuffer, blob, options);
 
         return blob;
     }
