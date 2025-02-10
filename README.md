@@ -18,7 +18,7 @@ cmake --build build
 
 ## Using the lib
 The library revolves around creating an `AugmentaServerProtocol::Client` object and using it to parse data blobs and messages received.
-See (examples/Example.cpp)[examples/Example.cpp] for a full usage example.
+See [examples/Example.cpp](examples/Example.cpp) for a full usage example.
 
 ## Missing features
  - Axis transform protocol option is not supported (yet)
