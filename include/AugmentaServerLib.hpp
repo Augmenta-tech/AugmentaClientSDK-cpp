@@ -464,19 +464,21 @@ namespace AugmentaServerProtocol
     class Client
     {
     public:
-        void initialize(const ProtocolOptions &options);
-
-        std::string getHandShakeMessage() const;
+        void initialize(const std::string& clientName, const ProtocolOptions &options);
+        void shutdown();
+        
+        std::string getRegisterMessage() const;
         std::string getPollMessage() const;
 
         DataBlob parseDataBlob(const std::byte *blob, size_t blobSize);
         ControlMessage parseControlMessage(const char *rawMessage);
 
     private:
-        bool initialized = false;
-
-        std::vector<std::string> tags;
+        std::string name;
         ProtocolOptions options;
+        std::vector<std::string> tags;
+
+        bool initialized = false;
 
         std::vector<std::byte> uncompressedBuffer;
     };

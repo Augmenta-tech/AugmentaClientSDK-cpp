@@ -388,7 +388,7 @@ namespace AugmentaServerProtocol
                 outMessage.errorMessage = messageJson.value("error", "");
             }
 
-            outMessage.serverProtocolVersion = messageJson.value("version", 1);
+            outMessage.serverProtocolVersion = messageJson.value("version", 2);
 
             auto setupIt = messageJson.find("setup");
             if (setupIt != messageJson.end())
@@ -406,10 +406,22 @@ namespace AugmentaServerProtocol
         }
     };
 
-    void Client::initialize(const ProtocolOptions &desiredOptions)
+    void Client::initialize(const std::string& clientName, const ProtocolOptions &desiredOptions)
     {
+        name = clientName;
         options = desiredOptions;
+
         initialized = true;
+    }
+
+    void Client::shutdown()
+    {
+        uncompressedBuffer.clear();
+
+        initialized = false;
+        
+        options = ProtocolOptions();
+        name = "";
     }
 
     DataBlob Client::parseDataBlob(const std::byte *buffer, size_t bufferSize)
@@ -458,7 +470,7 @@ namespace AugmentaServerProtocol
         return outMessage;
     }
 
-    std::string Client::getHandShakeMessage() const
+    std::string Client::getRegisterMessage() const
     {
         assert(initialized);
 
