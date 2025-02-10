@@ -205,7 +205,7 @@ namespace AugmentaServerProtocol
             // Size and ID have already been read
             size_t offset = 0;
 
-            offset += ReadBinary(buffer + offset, &(cluster.state));
+            offset += ReadBinary(buffer + offset, &cluster.state);
             offset += ReadVector<float>(buffer + offset, cluster.centroid.data(), 3);
             offset += ReadVector<float>(buffer + offset, cluster.velocity.data(), 3);
             offset += ReadVector<float>(buffer + offset, cluster.boundingBoxCenter.data(), 3);

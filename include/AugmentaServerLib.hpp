@@ -38,7 +38,10 @@ namespace AugmentaServerProtocol
 
     enum class ClusterState : int
     {
-        // TODO: Add doc !
+        Entered = 0,
+        Updated = 1,
+        WillLeave = 2,
+        Ghost = 3,
     };
 
     enum class BoundingBoxRotationMode
