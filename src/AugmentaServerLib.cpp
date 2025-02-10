@@ -474,22 +474,24 @@ namespace AugmentaServerProtocol
     {
         assert(initialized);
 
-        nlohmann::json handshakeJson;
-        handshakeJson["version"] = options.version;
+        nlohmann::json registerJson;
+        registerJson["version"] = options.version;
         // TODO: Tags
-        handshakeJson["streamClouds"] = options.streamClouds;
-        handshakeJson["streamClusters"] = options.streamClusters;
-        handshakeJson["streamClusterPoints"] = options.streamClusterPoints;
-        handshakeJson["downSample"] = options.downSample;
-        handshakeJson["boxRotationMode"] = rotationModeNames.at(options.boxRotationMode);
-        handshakeJson["useCompression"] = options.useCompression;
-        handshakeJson["usePolling"] = options.usePolling;
+        registerJson["streamClouds"] = options.streamClouds;
+        registerJson["streamClusters"] = options.streamClusters;
+        registerJson["streamClusterPoints"] = options.streamClusterPoints;
+        registerJson["downSample"] = options.downSample;
+        registerJson["boxRotationMode"] = rotationModeNames.at(options.boxRotationMode);
+        registerJson["useCompression"] = options.useCompression;
+        registerJson["usePolling"] = options.usePolling;
 
         nlohmann::json axisTransformJson;
         // TODO...
-        handshakeJson["axisTransform"] = axisTransformJson;
+        registerJson["axisTransform"] = axisTransformJson;
 
-        return handshakeJson.dump();
+        nlohmann::json dataJson;
+        dataJson["register"] = registerJson;
+        return dataJson.dump();
     }
 
     std::string Client::getPollMessage() const
