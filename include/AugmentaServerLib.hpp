@@ -250,9 +250,9 @@ namespace AugmentaServerProtocol
                 friend class DataBlobParser;
 
             public:
-                enum class Type : int
+                enum class Type : uint8_t
                 {
-                    Unknown = -1,
+                    Unknown = UINT8_MAX,
                     Slider = 0,
                     XYPad = 1,
                     PointCloud = 2,
@@ -277,7 +277,7 @@ namespace AugmentaServerProtocol
             int getPresence() const { return presence; }
             float getDensity() const { return density; }
             int getPropertiesCount() const { return properties.size(); }
-            const std::vector<Property>& getProperties() const { return properties; }
+            const std::vector<Property> &getProperties() const { return properties; }
 
         private:
             std::string controlID;
@@ -467,7 +467,7 @@ namespace AugmentaServerProtocol
     class Client
     {
     public:
-        void initialize(const std::string& clientName, const ProtocolOptions &options);
+        void initialize(const std::string &clientName, const ProtocolOptions &options);
         void shutdown();
 
         std::string getRegisterMessage() const;

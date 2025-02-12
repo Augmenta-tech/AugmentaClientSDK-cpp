@@ -205,12 +205,12 @@ namespace AugmentaServerProtocol
 			// Size and ID have already been read
 			size_t offset = 0;
 
-            offset += ReadBinary(buffer + offset, &cluster.state);
-            offset += ReadVector<float>(buffer + offset, cluster.centroid.data(), 3);
-            offset += ReadVector<float>(buffer + offset, cluster.velocity.data(), 3);
-            offset += ReadVector<float>(buffer + offset, cluster.boundingBoxCenter.data(), 3);
-            offset += ReadVector<float>(buffer + offset, cluster.boundingBoxSize.data(), 3);
-            offset += ReadBinary(buffer + offset, &cluster.weight);
+			offset += ReadBinary(buffer + offset, &cluster.state);
+			offset += ReadVector<float>(buffer + offset, cluster.centroid.data(), 3);
+			offset += ReadVector<float>(buffer + offset, cluster.velocity.data(), 3);
+			offset += ReadVector<float>(buffer + offset, cluster.boundingBoxCenter.data(), 3);
+			offset += ReadVector<float>(buffer + offset, cluster.boundingBoxSize.data(), 3);
+			offset += ReadBinary(buffer + offset, &cluster.weight);
 
 			if (options.boxRotationMode == ProtocolOptions::RotationMode::Quaternions)
 			{
@@ -406,7 +406,7 @@ namespace AugmentaServerProtocol
 		}
 	};
 
-    void Client::initialize(const std::string& clientName, const ProtocolOptions &desiredOptions)
+	void Client::initialize(const std::string &clientName, const ProtocolOptions &desiredOptions)
 	{
 		name = clientName;
 		options = desiredOptions;
@@ -474,20 +474,24 @@ namespace AugmentaServerProtocol
 	{
 		assert(initialized);
 
-		nlohmann::json registerJson;
-		registerJson["version"] = options.version;
+		nlohmann::json optionsJson;
+		optionsJson["version"] = options.version;
 		// TODO: Tags
-		registerJson["streamClouds"] = options.streamClouds;
-		registerJson["streamClusters"] = options.streamClusters;
-		registerJson["streamClusterPoints"] = options.streamClusterPoints;
-		registerJson["downSample"] = options.downSample;
-		registerJson["boxRotationMode"] = rotationModeNames.at(options.boxRotationMode);
-		registerJson["useCompression"] = options.useCompression;
-		registerJson["usePolling"] = options.usePolling;
+		optionsJson["streamClouds"] = options.streamClouds;
+		optionsJson["streamClusters"] = options.streamClusters;
+		optionsJson["streamClusterPoints"] = options.streamClusterPoints;
+		optionsJson["downSample"] = options.downSample;
+		optionsJson["boxRotationMode"] = rotationModeNames.at(options.boxRotationMode);
+		optionsJson["useCompression"] = options.useCompression;
+		optionsJson["usePolling"] = options.usePolling;
 
 		nlohmann::json axisTransformJson;
 		// TODO...
-		registerJson["axisTransform"] = axisTransformJson;
+		optionsJson["axisTransform"] = axisTransformJson;
+
+		nlohmann::json registerJson;
+		registerJson["name"] = name;
+		registerJson["options"] = optionsJson;
 
 		nlohmann::json dataJson;
 		dataJson["register"] = registerJson;
