@@ -188,7 +188,7 @@ namespace AugmentaServerProtocol
                 static_assert(sizeof(Vector3f) == 12);
 
                 Vector3f outPoint;
-                std::memcpy(&outPoint, pointsPtr + (pointIdx * sizeof(Vector3f)), 3);
+                std::memcpy(&outPoint, pointsPtr + (pointIdx * sizeof(Vector3f)), sizeof(Vector3f));
                 return outPoint;
             }
 
@@ -469,7 +469,7 @@ namespace AugmentaServerProtocol
     public:
         void initialize(const std::string& clientName, const ProtocolOptions &options);
         void shutdown();
-        
+
         std::string getRegisterMessage() const;
         std::string getPollMessage() const;
 
