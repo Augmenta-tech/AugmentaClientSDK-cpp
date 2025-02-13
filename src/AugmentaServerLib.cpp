@@ -1,5 +1,3 @@
-#pragma once
-
 #include "AugmentaServerLib.hpp"
 
 #include <json.hpp>

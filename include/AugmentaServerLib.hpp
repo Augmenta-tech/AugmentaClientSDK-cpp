@@ -7,6 +7,7 @@
 #include <optional>
 #include <variant>
 #include <cassert>
+#include <cstring>
 
 namespace AugmentaServerProtocol
 {
