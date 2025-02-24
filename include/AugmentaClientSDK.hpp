@@ -9,7 +9,7 @@
 #include <cassert>
 #include <cstring>
 
-namespace AugmentaServerProtocol
+namespace Augmenta
 {
     struct ProtocolOptions
     {
@@ -26,6 +26,7 @@ namespace AugmentaServerProtocol
         };
 
         int version = 2;
+        std::vector<std::string> tags;
         int downSample = 1;
         bool streamClouds = true;
         bool streamClusters = true;
@@ -43,13 +44,6 @@ namespace AugmentaServerProtocol
         Updated = 1,
         WillLeave = 2,
         Ghost = 3,
-    };
-
-    enum class BoundingBoxRotationMode
-    {
-        Degrees,
-        Radians,
-        Quaternions,
     };
 
     class DataBlob

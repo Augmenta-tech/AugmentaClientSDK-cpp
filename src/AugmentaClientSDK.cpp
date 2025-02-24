@@ -1,15 +1,15 @@
-#include "AugmentaServerLib.hpp"
+#include "AugmentaClientSDK.hpp"
 
 #include <json.hpp>
 #include <zstd.h>
 
 namespace
 {
-	const std::unordered_map<AugmentaServerProtocol::ProtocolOptions::RotationMode, std::string> rotationModeNames =
+	const std::unordered_map<Augmenta::ProtocolOptions::RotationMode, std::string> rotationModeNames =
 		{
-			{AugmentaServerProtocol::ProtocolOptions::RotationMode::Degrees, "Degrees"},
-			{AugmentaServerProtocol::ProtocolOptions::RotationMode::Radians, "Radians"},
-			{AugmentaServerProtocol::ProtocolOptions::RotationMode::Quaternions, "Quaternions"},
+			{Augmenta::ProtocolOptions::RotationMode::Degrees, "Degrees"},
+			{Augmenta::ProtocolOptions::RotationMode::Radians, "Radians"},
+			{Augmenta::ProtocolOptions::RotationMode::Quaternions, "Quaternions"},
 	};
 
 	// Read an int from a byte buffer. Returns the number of bytes read.
@@ -69,7 +69,7 @@ namespace
 	}
 }
 
-namespace AugmentaServerProtocol
+namespace Augmenta
 {
 	struct DataBlobParser
 	{
@@ -474,7 +474,7 @@ namespace AugmentaServerProtocol
 
 		nlohmann::json optionsJson;
 		optionsJson["version"] = options.version;
-		// TODO: Tags
+		optionsJson["tags"] = tags;
 		optionsJson["streamClouds"] = options.streamClouds;
 		optionsJson["streamClusters"] = options.streamClusters;
 		optionsJson["streamClusterPoints"] = options.streamClusterPoints;

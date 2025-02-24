@@ -3,21 +3,21 @@ cmake_minimum_required(VERSION 3.15)
 include(FetchContent)
 
 project(
-    AugmentaServerLib
+    AugmentaClientSDK
     VERSION 0.1
     LANGUAGES CXX
 )
 
-add_library(AugmentaServerLib
-    src/AugmentaServerLib.cpp
+add_library(AugmentaClientSDK
+    src/AugmentaClientSDK.cpp
 )
 
-set_target_properties(AugmentaServerLib 
+set_target_properties(AugmentaClientSDK 
     PROPERTIES
         CXX_STANDARD 17
 )
 
-target_include_directories(AugmentaServerLib
+target_include_directories(AugmentaClientSDK
     PRIVATE
         external
     PUBLIC
@@ -41,7 +41,7 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(zstd)
 
-target_link_libraries(AugmentaServerLib
+target_link_libraries(AugmentaClientSDK
     PRIVATE
         libzstd
 )

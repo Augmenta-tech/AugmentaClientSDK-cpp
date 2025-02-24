@@ -7,13 +7,13 @@ using CustomPointCloudDataStructure = std::vector<std::array<float, 3>>;
 
 struct ExampleWebSocketClient
 {
-    AugmentaServerProtocol::Client augmentaClient;
+    Augmenta::Client augmentaClient;
 
     // 1 -----
     // Before anything else we need to initialize the client with the desired options
     void Initialize()
     {
-        AugmentaServerProtocol::ProtocolOptions options;
+        Augmenta::ProtocolOptions options;
         options.usePolling = false;
         // Specify the options you need
 
@@ -26,7 +26,7 @@ struct ExampleWebSocketClient
     {
         // Use the lib to generate the message according to your options
         std::string requestMessage = augmentaClient.getRegisterMessage();
-        SendMessageToClient(requestMessage);
+        SendMessageToServer(requestMessage);
     }
 
     // 3 ------
@@ -37,7 +37,7 @@ struct ExampleWebSocketClient
     
         if (parsedMessage.isSetup())
         {
-            if (parsedMessage.getStatus() == AugmentaServerProtocol::ControlMessage::Status::Ok)
+            if (parsedMessage.getStatus() == Augmenta::ControlMessage::Status::Ok)
             {
                 // Handshake successful !
             }
@@ -85,14 +85,14 @@ struct ExampleWebSocketClient
             {
                 switch(property.getType())
                 {
-                    case AugmentaServerProtocol::DataBlob::ZonePacket::Property::Type::Slider:
+                    case Augmenta::DataBlob::ZonePacket::Property::Type::Slider:
                     {
-                        const auto& sliderData = property.getExtraData<AugmentaServerProtocol::DataBlob::ZonePacket::SliderProperty>();
+                        const auto& sliderData = property.getExtraData<Augmenta::DataBlob::ZonePacket::SliderProperty>();
                         auto value = sliderData->getValue();
                     }
-                    case AugmentaServerProtocol::DataBlob::ZonePacket::Property::Type::XYPad:
+                    case Augmenta::DataBlob::ZonePacket::Property::Type::XYPad:
                     {
-                        const auto& xyData = property.getExtraData<AugmentaServerProtocol::DataBlob::ZonePacket::XYPadProperty>();
+                        const auto& xyData = property.getExtraData<Augmenta::DataBlob::ZonePacket::XYPadProperty>();
                         auto x = xyData->getX();
                         auto y = xyData->getY();
                     }
@@ -102,7 +102,7 @@ struct ExampleWebSocketClient
         }
     }
 
-    void SendMessageToClient(const std::string& message)
+    void SendMessageToServer(const std::string& message)
     {
         // ... do your thing
     }
