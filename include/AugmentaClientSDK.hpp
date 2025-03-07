@@ -129,6 +129,10 @@ namespace Augmenta
                 return outValue;
             }
 
+            /// @brief Returns the bounding box rotation in quaternion. The rotation mode must be set to quaternions.
+            /// @warning The memory layout of the output type is expected to be x,y,z,w ! 
+            /// If your type uses another layout, you can use the getBoundingBoRotationQuaterionX/Y/Z/W methods to get individual components.
+            /// @tparam Vector4f: Quaternion float type (x,y,z,w) 
             template <typename Vector4f>
             Vector4f getBoundingBoxRotationQuaternions() const
             {
@@ -136,6 +140,38 @@ namespace Augmenta
 
                 Vector4f outValue;
                 std::memcpy(&outValue, boundingBoxRotation.data(), sizeof(Vector4f));
+                return outValue;
+            }
+
+            /// @brief Returns the X component of the bounding box rotation quaternion. Rotation mode must be set to quaternions.
+            float getBoundingBoxRotationQuaternionX() const 
+            {
+                float outValue;
+                std::memcpy(&outValue, boundingBoxRotation.data(), sizeof(float));
+                return outValue;
+            }
+
+            /// @brief Returns the Y component of the bounding box rotation quaternion. Rotation mode must be set to quaternions.
+            float getBoundingBoxRotationQuaternionY() const 
+            {
+                float outValue;
+                std::memcpy(&outValue, boundingBoxRotation.data() + 1, sizeof(float));
+                return outValue;
+            }
+
+            /// @brief Returns the Z component of the bounding box rotation quaternion. Rotation mode must be set to quaternions.
+            float getBoundingBoxRotationQuaternionZ() const 
+            {
+                float outValue;
+                std::memcpy(&outValue, boundingBoxRotation.data() + 2, sizeof(float));
+                return outValue;
+            }
+
+            /// @brief Returns the w component of the bounding box rotation quaternion. Rotation mode must be set to quaternions.
+            float getBoundingBoxRotationQuaternionW() const 
+            {
+                float outValue;
+                std::memcpy(&outValue, boundingBoxRotation.data() + 3, sizeof(float));
                 return outValue;
             }
 
