@@ -468,8 +468,11 @@ namespace Augmenta
                 Segment,
             };
 
-            struct ZoneParameters
+            class ZoneParameters
             {
+                friend class ControlMessageParser;
+
+            public:
                 ShapeType getShapeType() const { return shapeType; }
                 bool isBox() const { return shapeType == ShapeType::Box; }
                 bool isCylinder() const { return shapeType == ShapeType::Cylinder; }
@@ -548,7 +551,7 @@ namespace Augmenta
             bool isZone() const { return type == Container::Type::Zone; }
             bool isScene() const { return type == Container::Type::Scene; }
             bool isContainer() const { return type == Container::Type::Container; }
-            bool hasChilren() { return !children.empty(); };
+            bool hasChilren() const { return !children.empty(); };
             const std::vector<Container> &getChildren() const { return children; }
             const std::string &getName() const { return name; }
             const std::string &getAddress() const { return address; }
