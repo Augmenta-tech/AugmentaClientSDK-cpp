@@ -316,17 +316,18 @@ namespace Augmenta
 	{
 		static void parseContainer(const nlohmann::json &containerJson, ControlMessage::Container &outContainer)
 		{
-			outContainer.address = containerJson.value("address", "");
 			outContainer.name = containerJson.value("name", "");
-			outContainer.position = ReadJSON<std::array<float, 3>>(containerJson, "position", {0, 0, 0});
-			outContainer.rotation = ReadJSON<std::array<float, 3>>(containerJson, "rotation", {0, 0, 0});
-			outContainer.color = ReadJSON<std::array<float, 4>>(containerJson, "color", {0, 0, 0, 0});
 
 			auto typeJson = containerJson.find("type");
 			if (typeJson != containerJson.end())
 			{
+				outContainer.address = containerJson.value("address", "");
+				outContainer.position = ReadJSON<std::array<float, 3>>(containerJson, "position", {0, 0, 0});
+				outContainer.rotation = ReadJSON<std::array<float, 3>>(containerJson, "rotation", {0, 0, 0});
+				outContainer.color = ReadJSON<std::array<float, 4>>(containerJson, "color", {0, 0, 0, 0});
+
 				const std::string &typeStr = *typeJson;
-				if (typeStr == "Shape")
+				if (typeStr == "Zone")
 				{
 					outContainer.type = ControlMessage::Container::Type::Zone;
 					auto &parameters = outContainer.parameters.emplace<ControlMessage::Container::ZoneParameters>();
@@ -411,7 +412,8 @@ namespace Augmenta
 			if (setupIt != messageJson.end())
 			{
 				outMessage.type = ControlMessage::Type::Setup;
-				ControlMessageParser::parseContainer(*setupIt, outMessage.rootObject);
+				const auto worldIt = setupIt->find("world");
+				ControlMessageParser::parseContainer(*worldIt, outMessage.rootObject);
 			}
 
 			auto updateIt = messageJson.find("update");
