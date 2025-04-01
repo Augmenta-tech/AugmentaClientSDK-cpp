@@ -197,7 +197,7 @@ namespace Augmenta
                 return outValue;
             }
 
-            /// @brief Returns the w component of the bounding box rotation quaternion. Rotation mode must be set to quaternions.
+            /// @brief Returns the W component of the bounding box rotation quaternion. Rotation mode must be set to quaternions.
             float getBoundingBoxRotationQuaternionW() const
             {
                 float outValue;
@@ -234,7 +234,7 @@ namespace Augmenta
         public:
             int getPointCount() const { return pointsCount; }
 
-            // Copy the all cloud points at once. outData should be a contiguous container of Vector3f type (3*float = 12 bytes)
+            /// @brief Copy the all cloud points at once. outData should be a contiguous container of Vector3f type (3*float = 12 bytes)
             template <typename Vector3f>
             void getPointsData(Vector3f *outData) const
             {
@@ -242,7 +242,7 @@ namespace Augmenta
                 std::memcpy(outData, pointsPtr, pointsCount * sizeof(Vector3f));
             }
 
-            // Return the point (Vec3f) at a given idx. Prefer copying all point data at once if you can.
+            /// @brief Return the point (Vec3f) at a given idx. Prefer copying all point data at once if you can.
             template <typename Vector3f>
             Vector3f getPoint(size_t pointIdx) const
             {
@@ -255,7 +255,7 @@ namespace Augmenta
 
         private:
             int pointsCount;
-            const std::byte *pointsPtr;
+            const std::byte *pointsPtr = nullptr;
         };
 
         class ObjectPacket
@@ -264,10 +264,19 @@ namespace Augmenta
 
         public:
             bool hasCluster() const { return cluster.has_value(); }
-            const ClusterProperty &getCluster() const { return cluster.value(); }
-
             bool hasPointCloud() const { return pointCloud.has_value(); }
-            const PointCloudProperty &getPointCloud() const { return pointCloud.value(); }
+
+            const ClusterProperty &getCluster() const
+            {
+                assert(hasCluster());
+                return cluster.value();
+            }
+
+            const PointCloudProperty &getPointCloud() const
+            {
+                assert(hasPointCloud());
+                return pointCloud.value();
+            }
 
             int getID() const { return id; }
 
@@ -317,16 +326,36 @@ namespace Augmenta
                     Slider = 0,
                     XYPad = 1,
                     PointCloud = 2,
-
                 };
 
             public:
                 Type getType() const { return type; }
+                bool isSlider() const { return type == Type::Slider; }
+                bool isXYPad() const { return type == Type::XYPad; }
+                bool isPointCloud() const { return type == Type::PointCloud; }
 
+                const SliderProperty *getSliderParameters() const
+                {
+                    assert(isSlider());
+                    return getExtraData<SliderProperty>();
+                }
+
+                const XYPadProperty *getXYPadParameters() const
+                {
+                    assert(isXYPad());
+                    return getExtraData<XYPadProperty>();
+                }
+
+                const PointCloudProperty *getPointCloudParameters() const
+                {
+                    assert(isPointCloud());
+                    return getExtraData<PointCloudProperty>();
+                }
+
+            private:
                 template <typename T>
                 const T *getExtraData() const { return std::get_if<T>(&data); }
 
-            private:
                 Type type = Type::Unknown;
                 std::variant<SliderProperty, XYPadProperty, PointCloudProperty> data;
             };
@@ -441,6 +470,61 @@ namespace Augmenta
 
             struct ZoneParameters
             {
+                ShapeType getShapeType() const { return shapeType; }
+                bool isBox() const { return shapeType == ShapeType::Box; }
+                bool isCylinder() const { return shapeType == ShapeType::Cylinder; }
+                bool isSphere() const { return shapeType == ShapeType::Sphere; }
+                bool isPath() const { return shapeType == ShapeType::Path; }
+                bool isGrid() const { return shapeType == ShapeType::Grid; }
+                bool isPolygon() const { return shapeType == ShapeType::Polygon; }
+                bool isSegment() const { return shapeType == ShapeType::Segment; }
+
+                const BoxShapeParameters *getBoxShapeParameters() const
+                {
+                    assert(isBox());
+                    return getShapeParameters<BoxShapeParameters>();
+                }
+
+                const CylinderShapeParameters *getCylinderShapeParameters() const
+                {
+                    assert(isCylinder());
+                    return getShapeParameters<CylinderShapeParameters>();
+                }
+
+                const SphereShapeParameters *getSphereShapeParameters() const
+                {
+                    assert(isSphere());
+                    return getShapeParameters<SphereShapeParameters>();
+                }
+
+                const PathShapeParameters *getPathShapeParameters() const
+                {
+                    assert(isPath());
+                    return getShapeParameters<PathShapeParameters>();
+                }
+
+                const GridShapeParameters *getGridShapeParameters() const
+                {
+                    assert(isGrid());
+                    return getShapeParameters<GridShapeParameters>();
+                }
+
+                const PolygonShapeParameters *getPolygonShapeParameters() const
+                {
+                    assert(isPolygon());
+                    return getShapeParameters<PolygonShapeParameters>();
+                }
+
+                const SegmentShapeParameters *getSegmentShapeParameters() const
+                {
+                    assert(isSegment());
+                    return getShapeParameters<SegmentShapeParameters>();
+                }
+
+            private:
+                template <typename T>
+                const T *getShapeParameters() const { return std::get_if<T>(&shapeParameters); }
+
                 ShapeType shapeType = ShapeType::Unknown;
                 std::variant<BoxShapeParameters,
                              CylinderShapeParameters,
@@ -450,20 +534,6 @@ namespace Augmenta
                              PolygonShapeParameters,
                              SegmentShapeParameters>
                     shapeParameters;
-
-                ShapeType getShapeType() const { return shapeType; }
-
-                const BoxShapeParameters *getBoxShapeParameters() const { return getShapeParameters<BoxShapeParameters>(); }
-                const CylinderShapeParameters *getCylinderShapeParameters() const { return getShapeParameters<CylinderShapeParameters>(); }
-                const SphereShapeParameters *getSphereShapeParameters() const { return getShapeParameters<SphereShapeParameters>(); }
-                const PathShapeParameters *getPathShapeParameters() const { return getShapeParameters<PathShapeParameters>(); }
-                const GridShapeParameters *getGridShapeParameters() const { return getShapeParameters<GridShapeParameters>(); }
-                const PolygonShapeParameters *getPolygonShapeParameters() const { return getShapeParameters<PolygonShapeParameters>(); }
-                const SegmentShapeParameters *getSegmentShapeParameters() const { return getShapeParameters<SegmentShapeParameters>(); }
-
-            private:
-                template <typename T>
-                const T *getShapeParameters() const { return std::get_if<T>(&shapeParameters); }
             };
 
             struct SceneParameters
@@ -479,16 +549,30 @@ namespace Augmenta
             bool isScene() const { return type == Container::Type::Scene; }
             bool isContainer() const { return type == Container::Type::Container; }
             bool hasChilren() { return !children.empty(); };
-
+            const std::vector<Container> &getChildren() const { return children; }
             const std::string &getName() const { return name; }
             const std::string &getAddress() const { return address; }
             const std::array<float, 3> &getPosition() const { return position; };
             const std::array<float, 3> &getRotation() const { return rotation; };
             const std::array<float, 4> &getColor() const { return color; };
 
-            const SceneParameters *getSceneParameters() const { return getParameters<SceneParameters>(); }
-            const ZoneParameters *getZoneParameters() const { return getParameters<ZoneParameters>(); }
-            const ContainerParameters *getContainerParameters() const { return getParameters<ContainerParameters>(); }
+            const SceneParameters *getSceneParameters() const
+            {
+                assert(isScene());
+                return getParameters<SceneParameters>();
+            }
+
+            const ZoneParameters *getZoneParameters() const
+            {
+                assert(isZone());
+                return getParameters<ZoneParameters>();
+            }
+
+            const ContainerParameters *getContainerParameters() const
+            {
+                assert(isContainer());
+                return getParameters<ContainerParameters>();
+            }
 
         private:
             Container::Type type = Type::Unknown;
