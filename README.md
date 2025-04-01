@@ -20,9 +20,6 @@ cmake --build build
 The SDK revolves around creating an `Augmenta::Client` object and using it to parse data blobs and messages received.
 See [examples/Example.cpp](examples/Example.cpp) for a full usage example.
 
-## Missing features
- - Axis transform protocol option is not supported (yet)
-
 ## Dependencies
  - [zstd](https://github.com/facebook/zstd)
  - [nlohmann::json](https://github.com/nlohmann/json)

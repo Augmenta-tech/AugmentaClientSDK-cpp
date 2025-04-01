@@ -5,11 +5,30 @@
 
 namespace
 {
-	const std::unordered_map<Augmenta::ProtocolOptions::RotationMode, std::string> rotationModeNames =
-		{
-			{Augmenta::ProtocolOptions::RotationMode::Degrees, "Degrees"},
-			{Augmenta::ProtocolOptions::RotationMode::Radians, "Radians"},
-			{Augmenta::ProtocolOptions::RotationMode::Quaternions, "Quaternions"},
+	const std::unordered_map<Augmenta::ProtocolOptions::RotationMode, std::string> rotationModeNames = {
+		{Augmenta::ProtocolOptions::RotationMode::Degrees, "degrees"},
+		{Augmenta::ProtocolOptions::RotationMode::Radians, "radians"},
+		{Augmenta::ProtocolOptions::RotationMode::Quaternions, "quaternions"},
+	};
+
+	const std::unordered_map<Augmenta::ProtocolOptions::AxisTransform::AxisMode, std::string> axisModeNames = {
+		{Augmenta::ProtocolOptions::AxisTransform::AxisMode::ZUpRightHanded, "z_up_right"},
+		{Augmenta::ProtocolOptions::AxisTransform::AxisMode::ZUpLeftHanded, "z_up_left"},
+		{Augmenta::ProtocolOptions::AxisTransform::AxisMode::YUpRightHanded, "y_up_right"},
+		{Augmenta::ProtocolOptions::AxisTransform::AxisMode::YUpLeftHanded, "y_up_left"},
+	};
+
+	const std::unordered_map<Augmenta::ProtocolOptions::AxisTransform::OriginMode, std::string> originModeNames = {
+		{Augmenta::ProtocolOptions::AxisTransform::OriginMode::BottomLeft, "bottom_left"},
+		{Augmenta::ProtocolOptions::AxisTransform::OriginMode::BottomRight, "bottom_right"},
+		{Augmenta::ProtocolOptions::AxisTransform::OriginMode::TopLeft, "top_left"},
+		{Augmenta::ProtocolOptions::AxisTransform::OriginMode::TopRight, "top_right"},
+	};
+
+	const std::unordered_map<Augmenta::ProtocolOptions::AxisTransform::CoordinateSpace, std::string> coordinateSpaceNames = {
+		{Augmenta::ProtocolOptions::AxisTransform::CoordinateSpace::Absolute, "absolute"},
+		{Augmenta::ProtocolOptions::AxisTransform::CoordinateSpace::Relative, "relative"},
+		{Augmenta::ProtocolOptions::AxisTransform::CoordinateSpace::Normalized, "normalized"},
 	};
 
 	// Read an int from a byte buffer. Returns the number of bytes read.
@@ -484,7 +503,15 @@ namespace Augmenta
 		optionsJson["usePolling"] = options.usePolling;
 
 		nlohmann::json axisTransformJson;
-		// TODO...
+		axisTransformJson["axis"] = axisModeNames.at(options.axisTransform.axis);
+		axisTransformJson["origin"] = originModeNames.at(options.axisTransform.origin);
+		axisTransformJson["flipX"] = options.axisTransform.flipX;
+		axisTransformJson["flipY"] = options.axisTransform.flipY;
+		axisTransformJson["flipZ"] = options.axisTransform.flipZ;
+		axisTransformJson["coordinateSpace"] = coordinateSpaceNames.at(options.axisTransform.coordinateSpace);
+		// TODO: OriginOffset
+		// TODO: customMatrix
+
 		optionsJson["axisTransform"] = axisTransformJson;
 
 		nlohmann::json registerJson;

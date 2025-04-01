@@ -20,9 +20,39 @@ namespace Augmenta
             Quaternions,
         };
 
-        enum class AxisTransformMode
+        struct AxisTransform
         {
-            // TODO
+            enum class AxisMode
+            {
+                ZUpRightHanded,
+                ZUpLeftHanded,
+                YUpRightHanded,
+                YUpLeftHanded,
+            };
+
+            enum class OriginMode
+            {
+                BottomLeft,
+                BottomRight,
+                TopLeft,
+                TopRight,
+            };
+
+            enum class CoordinateSpace
+            {
+                Absolute,
+                Relative,
+                Normalized,
+            };
+
+            AxisMode axis = AxisMode::ZUpRightHanded;
+            OriginMode origin = OriginMode::BottomLeft;
+            bool flipX = false;
+            bool flipY = false;
+            bool flipZ = false;
+            CoordinateSpace coordinateSpace = CoordinateSpace::Absolute;
+            // public originOffset; // TODO
+            // public customMatrix; // TODO
         };
 
         int version = 2;
@@ -33,7 +63,7 @@ namespace Augmenta
         bool streamClusterPoints = true;
         bool streamZonePoints = false;
         RotationMode boxRotationMode = RotationMode::Quaternions;
-        AxisTransformMode axisTransformMode; // TODO: Default ?
+        AxisTransform axisTransform; // TODO: Default ?
         bool useCompression = true;
         bool usePolling = false;
     };
@@ -130,9 +160,9 @@ namespace Augmenta
             }
 
             /// @brief Returns the bounding box rotation in quaternion. The rotation mode must be set to quaternions.
-            /// @warning The memory layout of the output type is expected to be x,y,z,w ! 
+            /// @warning The memory layout of the output type is expected to be x,y,z,w !
             /// If your type uses another layout, you can use the getBoundingBoRotationQuaterionX/Y/Z/W methods to get individual components.
-            /// @tparam Vector4f: Quaternion float type (x,y,z,w) 
+            /// @tparam Vector4f: Quaternion float type (x,y,z,w)
             template <typename Vector4f>
             Vector4f getBoundingBoxRotationQuaternions() const
             {
@@ -144,7 +174,7 @@ namespace Augmenta
             }
 
             /// @brief Returns the X component of the bounding box rotation quaternion. Rotation mode must be set to quaternions.
-            float getBoundingBoxRotationQuaternionX() const 
+            float getBoundingBoxRotationQuaternionX() const
             {
                 float outValue;
                 std::memcpy(&outValue, boundingBoxRotation.data(), sizeof(float));
@@ -152,7 +182,7 @@ namespace Augmenta
             }
 
             /// @brief Returns the Y component of the bounding box rotation quaternion. Rotation mode must be set to quaternions.
-            float getBoundingBoxRotationQuaternionY() const 
+            float getBoundingBoxRotationQuaternionY() const
             {
                 float outValue;
                 std::memcpy(&outValue, boundingBoxRotation.data() + 1, sizeof(float));
@@ -160,7 +190,7 @@ namespace Augmenta
             }
 
             /// @brief Returns the Z component of the bounding box rotation quaternion. Rotation mode must be set to quaternions.
-            float getBoundingBoxRotationQuaternionZ() const 
+            float getBoundingBoxRotationQuaternionZ() const
             {
                 float outValue;
                 std::memcpy(&outValue, boundingBoxRotation.data() + 2, sizeof(float));
@@ -168,7 +198,7 @@ namespace Augmenta
             }
 
             /// @brief Returns the w component of the bounding box rotation quaternion. Rotation mode must be set to quaternions.
-            float getBoundingBoxRotationQuaternionW() const 
+            float getBoundingBoxRotationQuaternionW() const
             {
                 float outValue;
                 std::memcpy(&outValue, boundingBoxRotation.data() + 3, sizeof(float));
