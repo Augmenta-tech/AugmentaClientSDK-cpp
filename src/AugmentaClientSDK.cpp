@@ -102,7 +102,7 @@ namespace Augmenta
 
 	bool ProtocolOptions::AxisTransform::operator!=(const AxisTransform &other) const
 	{
-		return *this != other;
+		return !(*this == other);
 	}
 
 	bool ProtocolOptions::operator==(const ProtocolOptions &other) const
@@ -133,6 +133,7 @@ namespace Augmenta
 
 	bool ProtocolOptions::operator!=(const ProtocolOptions &other) const
 	{
+		return !(*this == other);
 	}
 
 	struct DataBlobParser
