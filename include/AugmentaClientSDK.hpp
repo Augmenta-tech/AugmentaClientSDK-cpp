@@ -548,6 +548,7 @@ namespace Augmenta
             {
             };
 
+            Type getType() const { return type; }
             bool isZone() const { return type == Container::Type::Zone; }
             bool isScene() const { return type == Container::Type::Scene; }
             bool isContainer() const { return type == Container::Type::Container; }
