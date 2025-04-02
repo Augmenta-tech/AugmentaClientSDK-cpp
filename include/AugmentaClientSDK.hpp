@@ -53,6 +53,9 @@ namespace Augmenta
             CoordinateSpace coordinateSpace = CoordinateSpace::Absolute;
             // public originOffset; // TODO
             // public customMatrix; // TODO
+
+            bool operator==(const AxisTransform& other) const;
+            bool operator!=(const AxisTransform& other) const;
         };
 
         int version = 2;
@@ -66,6 +69,9 @@ namespace Augmenta
         AxisTransform axisTransform; // TODO: Default ?
         bool useCompression = true;
         bool usePolling = false;
+
+        bool operator==(const ProtocolOptions& other) const;
+        bool operator!=(const ProtocolOptions& other) const;
     };
 
     enum class ClusterState : int

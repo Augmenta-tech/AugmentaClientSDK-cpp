@@ -90,6 +90,51 @@ namespace
 
 namespace Augmenta
 {
+	bool ProtocolOptions::AxisTransform::operator==(const AxisTransform &other) const
+	{
+		return axis == other.axis &&
+			   origin == other.origin &&
+			   flipX == other.flipX &&
+			   flipY == other.flipY &&
+			   flipZ == other.flipZ &&
+			   coordinateSpace == other.coordinateSpace;
+	}
+
+	bool ProtocolOptions::AxisTransform::operator!=(const AxisTransform &other) const
+	{
+		return *this != other;
+	}
+
+	bool ProtocolOptions::operator==(const ProtocolOptions &other) const
+	{
+		if (tags.size() != other.tags.size())
+		{
+			return false;
+		}
+
+		for (int idx = 0; idx < tags.size(); ++idx)
+		{
+			if (tags[idx] != other.tags[idx])
+			{
+				return false;
+			}
+		}
+
+		return version == other.version &&
+			   downSample == other.downSample &&
+			   streamClouds == other.streamClouds &&
+			   streamClusters == other.streamClusters &&
+			   streamZonePoints == other.streamZonePoints &&
+			   boxRotationMode == other.boxRotationMode &&
+			   axisTransform == other.axisTransform &&
+			   useCompression == other.useCompression &&
+			   usePolling == other.usePolling;
+	}
+
+	bool ProtocolOptions::operator!=(const ProtocolOptions &other) const
+	{
+	}
+
 	struct DataBlobParser
 	{
 		enum class PacketType : uint8_t
