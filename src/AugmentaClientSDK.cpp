@@ -124,6 +124,7 @@ namespace Augmenta
 			   downSample == other.downSample &&
 			   streamClouds == other.streamClouds &&
 			   streamClusters == other.streamClusters &&
+			   streamClusterPoints == other.streamClusterPoints &&
 			   streamZonePoints == other.streamZonePoints &&
 			   boxRotationMode == other.boxRotationMode &&
 			   axisTransform == other.axisTransform &&
