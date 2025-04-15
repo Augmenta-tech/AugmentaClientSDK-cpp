@@ -467,7 +467,8 @@ namespace Augmenta
 			if (updateIt != messageJson.end())
 			{
 				outMessage.type = ControlMessage::Type::Update;
-				ControlMessageParser::parseContainer(*updateIt, outMessage.rootObject);
+				auto updatedObject = updateIt->front();
+				ControlMessageParser::parseContainer(updatedObject, outMessage.rootObject);
 			}
 		}
 	};
