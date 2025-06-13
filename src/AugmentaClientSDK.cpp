@@ -380,38 +380,52 @@ namespace Augmenta
 					auto &parameters = outContainer.parameters.emplace<ControlMessage::Container::ZoneParameters>();
 
 					auto shapeJson = containerJson["shape"];
-					auto shapeType = shapeJson["shape"];
+					auto shapeTypeStr = shapeJson["shape"];
 
-					if (shapeType == "Box")
+					if (shapeTypeStr == "Box")
 					{
+						parameters.shapeType = ControlMessage::Container::ShapeType::Box;
+						
 						auto &shapeParameters = parameters.shapeParameters.emplace<ControlMessage::Container::BoxShapeParameters>();
 						shapeParameters.size = ReadJSON<std::array<float, 3>>(shapeJson, "size", {0, 0, 0});
 					}
-					else if (shapeType == "Cylinder")
+					else if (shapeTypeStr == "Cylinder")
 					{
+						parameters.shapeType = ControlMessage::Container::ShapeType::Cylinder;
+						
 						auto &shapeParameters = parameters.shapeParameters.emplace<ControlMessage::Container::CylinderShapeParameters>();
 						shapeParameters.height = shapeJson["height"];
 						shapeParameters.radius = shapeJson["radius"];
 					}
-					else if (shapeType == "Sphere")
+					else if (shapeTypeStr == "Sphere")
 					{
+						parameters.shapeType = ControlMessage::Container::ShapeType::Sphere;
+						
 						auto &shapeParameters = parameters.shapeParameters.emplace<ControlMessage::Container::SphereShapeParameters>();
 						shapeParameters.radius = shapeJson["radius"];
 					}
-					else if (shapeType == "Path")
+					else if (shapeTypeStr == "Path")
 					{
+						parameters.shapeType = ControlMessage::Container::ShapeType::Path;
+						
 						auto &shapeParameters = parameters.shapeParameters.emplace<ControlMessage::Container::PathShapeParameters>();
 					}
-					else if (shapeType == "Grid")
+					else if (shapeTypeStr == "Grid")
 					{
+						parameters.shapeType = ControlMessage::Container::ShapeType::Grid;
+						
 						auto &shapeParameters = parameters.shapeParameters.emplace<ControlMessage::Container::GridShapeParameters>();
 					}
-					else if (shapeType == "Polygon")
+					else if (shapeTypeStr == "Polygon")
 					{
+						parameters.shapeType = ControlMessage::Container::ShapeType::Polygon;
+						
 						auto &shapeParameters = parameters.shapeParameters.emplace<ControlMessage::Container::PolygonShapeParameters>();
 					}
-					else if (shapeType == "Segment")
+					else if (shapeTypeStr == "Segment")
 					{
+						parameters.shapeType = ControlMessage::Container::ShapeType::Segment;
+						
 						auto &shapeParameters = parameters.shapeParameters.emplace<ControlMessage::Container::SegmentShapeParameters>();
 					}
 				}
