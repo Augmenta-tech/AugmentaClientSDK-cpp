@@ -380,7 +380,8 @@ namespace Augmenta
 					auto &parameters = outContainer.parameters.emplace<ControlMessage::Container::ZoneParameters>();
 
 					auto shapeJson = containerJson["shape"];
-					auto shapeTypeStr = shapeJson["shape"];
+					auto shapeTypeStr = shapeJson["type"];
+					assert(!shapeTypeStr.empty());
 
 					if (shapeTypeStr == "Box")
 					{
@@ -427,6 +428,10 @@ namespace Augmenta
 						parameters.shapeType = ControlMessage::Container::ShapeType::Segment;
 						
 						auto &shapeParameters = parameters.shapeParameters.emplace<ControlMessage::Container::SegmentShapeParameters>();
+					}
+					else
+					{
+						assert(false); // Unexpected shape type
 					}
 				}
 				else if (typeStr == "Scene")
