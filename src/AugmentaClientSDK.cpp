@@ -566,6 +566,7 @@ namespace Augmenta
 		optionsJson["streamClouds"] = options.streamClouds;
 		optionsJson["streamClusters"] = options.streamClusters;
 		optionsJson["streamClusterPoints"] = options.streamClusterPoints;
+		optionsJson["streamZonePoints"] = options.streamZonePoints;
 		optionsJson["downSample"] = options.downSample;
 		optionsJson["boxRotationMode"] = rotationModeNames.at(options.boxRotationMode);
 		optionsJson["useCompression"] = options.useCompression;
