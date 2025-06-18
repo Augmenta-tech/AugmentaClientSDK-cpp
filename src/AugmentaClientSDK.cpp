@@ -388,7 +388,7 @@ namespace Augmenta
 						parameters.shapeType = ControlMessage::Container::ShapeType::Box;
 						
 						auto &shapeParameters = parameters.shapeParameters.emplace<ControlMessage::Container::BoxShapeParameters>();
-						shapeParameters.size = ReadJSON<std::array<float, 3>>(shapeJson, "size", {0, 0, 0});
+						shapeParameters.size = ReadJSON<std::array<float, 3>>(shapeJson, "boxSize", {0, 0, 0});
 					}
 					else if (shapeTypeStr == "Cylinder")
 					{
