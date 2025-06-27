@@ -1,68 +1,67 @@
-# Augmenta Software Development Kit (SDK) License Agreement
+Augmenta Software Development Kit (SDK) License Agreement
 
-**Effective Date:** 2025-05-27
+Effective Date: 2025-05-27
 
-This Software Development Kit License Agreement ("Agreement") is a legal agreement between you (either an individual or a legal entity, hereinafter "You" or "Your") and **Augmenta** ("Augmenta", "We", "Us", or "Our") governing your use of the **Augmenta Software Development Kit** ("SDK").
+This Software Development Kit License Agreement ("Agreement") is a legal agreement between you (either an individual or a legal entity, hereinafter "You" or "Your") and Augmenta ("Augmenta", "We", "Us", or "Our") governing your use of the Augmenta Software Development Kit ("SDK").
 
-**By installing, copying, or otherwise using the SDK, you agree to be bound by the terms of this Agreement. If you do not agree, do not install or use the SDK.**
+By installing, copying, or otherwise using the SDK, you agree to be bound by the terms of this Agreement. If you do not agree, do not install or use the SDK.
 
-## 1. Definitions
+1. Definitions
 
-- **“SDK”**: The Augmenta Software Development Kit, including but not limited to libraries, header files, sample code, documentation, and tools provided by Augmenta.
-- **“Application”**: Any software product developed by You that integrates with the Augmenta Software using the SDK.
-- **“Augmenta Software”**: The proprietary real-time spatial analysis and computer vision platform developed and owned by Augmenta.
+* “SDK”: The Augmenta Software Development Kit, including but not limited to libraries, header files, sample code, documentation, and tools provided by Augmenta.
+* “Application”: Any software product developed by You that integrates with the Augmenta Software using the SDK.
+* “Augmenta Software”: The proprietary real-time spatial analysis and computer vision platform developed and owned by Augmenta.
 
-## 2. License Grant
+2. License Grant
 
 Subject to the terms of this Agreement, Augmenta grants You a limited, non-exclusive, non-transferable, non-sublicensable license to:
 
-- Use the SDK solely for the purpose of developing Applications that interact with the Augmenta Software;
-- Distribute Applications incorporating the SDK, provided such Applications do not expose or redistribute the SDK itself in whole or in part, except for necessary runtime components;
-- Include links to the Augmenta website or documentation within Your Application’s interface.
+* Use the SDK solely for the purpose of developing Applications that interact with the Augmenta Software;
+* Distribute Applications incorporating the SDK, provided such Applications do not expose or redistribute the SDK itself in whole or in part, except for necessary runtime components;
+* Include links to the Augmenta website or documentation within Your Application’s interface.
 
-## 3. Restrictions
+3. Restrictions
 
-You may **not**:
+You may not:
 
-- Use the SDK to develop software that replicates or competes with the core functionality of the Augmenta Software;
-- Modify, reverse engineer, decompile, or disassemble the SDK, except where permitted by applicable law;
-- Remove or obscure any proprietary notices;
-- Sublicense, rent, lease, or otherwise distribute the SDK apart from an integrated Application.
+* Use the SDK to develop software that replicates or competes with the core functionality of the Augmenta Software;
+* Modify, reverse engineer, decompile, or disassemble the SDK, except where permitted by applicable law;
+* Remove or obscure any proprietary notices;
+* Sublicense, rent, lease, or otherwise distribute the SDK apart from an integrated Application.
 
-## 4. Attribution and Branding
+4. Attribution and Branding
 
-- Applications using the SDK must clearly mention and display the Augmenta name when using the Augmenta SDK features.
-- If your Application lists third-party libraries or technologies, it must include:  
-  `Augmenta SDK — https://augmenta.tech`
-- When branding or logos integration may be relevant, you agree to incorporate them according to Augmenta’s brand guidelines.
+* Applications using the SDK must clearly mention and display the Augmenta name when using the Augmenta SDK features.
+* If your Application lists third-party libraries or technologies, it must include:
+  Augmenta SDK — [https://augmenta.tech](https://augmenta.tech)
+* When branding or logos integration may be relevant, you agree to incorporate them according to Augmenta’s brand guidelines.
 
-## 5. Ownership
+5. Ownership
 
 All rights, title, and interest in and to the SDK, including intellectual property rights, remain with Augmenta. You retain ownership of your Applications. Any suggestions or feedback you provide may be used by Augmenta without obligation.
 
-## 6. Support and Updates
+6. Support and Updates
 
 The SDK is provided as is. Augmenta is not obligated to provide support or updates, though we may do so at our sole discretion.
 
-## 7. Disclaimer of Warranty
+7. Disclaimer of Warranty
 
 THE SDK IS PROVIDED AS IS, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, OR NON-INFRINGEMENT.
 
-## 8. Limitation of Liability
+8. Limitation of Liability
 
 IN NO EVENT SHALL AUGMENTA BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, OR CONSEQUENTIAL DAMAGES (INCLUDING BUT NOT LIMITED TO LOSS OF PROFITS, DATA, OR BUSINESS INTERRUPTION) ARISING OUT OF THE USE OR INABILITY TO USE THE SDK.
 
-## 9. Term and Termination
+9. Term and Termination
 
 This Agreement remains in effect until terminated. Augmenta may terminate this Agreement if you breach any term. Upon termination, you must cease use of the SDK and destroy all copies in your possession.
 
-## 10. Governing Law
+10. Governing Law
 
-This Agreement shall be governed by and construed in accordance with the laws of **France**. Disputes shall be subject to the exclusive jurisdiction of the courts of France.
+This Agreement shall be governed by and construed in accordance with the laws of France. Disputes shall be subject to the exclusive jurisdiction of the courts of France.
 
-## 11. Entire Agreement
+11. Entire Agreement
 
 This Agreement is the complete agreement between You and Augmenta with respect to the SDK, superseding all prior agreements.
 
-
-For questions, contact: [legal@augmenta.tech](mailto:legal@augmenta.tech)
+For questions, contact: legal@augmenta.tech
