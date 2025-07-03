@@ -69,6 +69,7 @@ namespace Augmenta
         AxisTransform axisTransform; // TODO: Default ?
         bool useCompression = true;
         bool usePolling = false;
+        bool displayPointIntensity = false;
 
         bool operator==(const ProtocolOptions& other) const;
         bool operator!=(const ProtocolOptions& other) const;
