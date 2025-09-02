@@ -126,6 +126,7 @@ namespace Augmenta
 			   streamClusters == other.streamClusters &&
 			   streamClusterPoints == other.streamClusterPoints &&
 			   streamZonePoints == other.streamZonePoints &&
+			   streamGhostClusters == other.streamGhostClusters &&
 			   boxRotationMode == other.boxRotationMode &&
 			   axisTransform == other.axisTransform &&
 			   useCompression == other.useCompression &&
@@ -566,6 +567,7 @@ namespace Augmenta
 		optionsJson["streamClouds"] = options.streamClouds;
 		optionsJson["streamClusters"] = options.streamClusters;
 		optionsJson["streamClusterPoints"] = options.streamClusterPoints;
+		optionsJson["streamGhostClusters"] = options.streamGhostClusters;
 		optionsJson["streamZonePoints"] = options.streamZonePoints;
 		optionsJson["downSample"] = options.downSample;
 		optionsJson["boxRotationMode"] = rotationModeNames.at(options.boxRotationMode);
