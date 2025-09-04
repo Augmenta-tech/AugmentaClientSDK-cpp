@@ -510,6 +510,16 @@ namespace Augmenta
 		name = "";
 	}
 
+	void Client::clearTags()
+	{
+		tags.clear();
+	}
+	
+	void Client::addTag(const std::string& tag)
+	{
+		tags.push_back(tag);
+	}
+
 	DataBlob Client::parseDataBlob(const std::byte *buffer, size_t bufferSize)
 	{
 		assert(initialized);
