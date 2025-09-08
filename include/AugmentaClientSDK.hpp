@@ -626,6 +626,12 @@ namespace Augmenta
         void initialize(const std::string &clientName, const ProtocolOptions &options);
         void shutdown();
 
+        /// @brief Clear requested tags list
+        void clearTags();
+
+        /// @brief Add a server-side tag to request.  
+        void addTag(const std::string& tag);
+
         std::string getRegisterMessage() const;
         std::string getPollMessage() const;
 
