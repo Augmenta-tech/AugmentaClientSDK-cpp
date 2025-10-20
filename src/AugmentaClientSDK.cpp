@@ -295,11 +295,11 @@ namespace Augmenta
 			size_t offset = 0;
 
 			// Size and type have already been read
-			int controlIDSize;
-			offset += ReadBinary(buffer + offset, &controlIDSize);
+			int emitterZoneAddressSize;
+			offset += ReadBinary(buffer + offset, &emitterZoneAddressSize);
 
-			outZoneEvent.controlID.resize(controlIDSize);
-			offset += ReadVector<char>(buffer + offset, outZoneEvent.controlID.data(), controlIDSize);
+			outZoneEvent.emitterZoneAddress.resize(emitterZoneAddressSize);
+			offset += ReadVector<char>(buffer + offset, outZoneEvent.emitterZoneAddress.data(), emitterZoneAddressSize);
 
 			offset += ReadBinary(buffer + offset, &outZoneEvent.enters);
 			offset += ReadBinary(buffer + offset, &outZoneEvent.leaves);

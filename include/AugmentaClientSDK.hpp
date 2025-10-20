@@ -369,7 +369,12 @@ namespace Augmenta
             };
 
         public:
-            const std::string &getControlID() const { return controlID; }
+            [[deprecated("controlID is deprecated. Use getEmitterZoneAddress() instead")]]
+            const std::string &getControlID() const { return getEmitterZoneAddress(); }
+            
+            /// @brief Return the address of the zone that emitted this event. You can use
+            /// that to match the event with the zone container received at setup time.
+            const std::string &getEmitterZoneAddress() const { return emitterZoneAddress; }
             uint8_t getEnters() const { return enters; }
             uint8_t getLeaves() const { return leaves; }
             int getPresence() const { return presence; }
@@ -378,7 +383,7 @@ namespace Augmenta
             const std::vector<Property> &getProperties() const { return properties; }
 
         private:
-            std::string controlID;
+            std::string emitterZoneAddress;
             uint8_t enters;
             uint8_t leaves;
             int presence;
