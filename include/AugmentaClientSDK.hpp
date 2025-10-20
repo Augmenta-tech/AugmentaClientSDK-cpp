@@ -113,8 +113,11 @@ namespace Augmenta
             friend class DataBlobParser;
 
         public:
+            /// @brief The state of the cluster can be used to react to important events such as entrance/leave.
             ClusterState getState() const { return state; }
 
+            /// @brief The centroid of the pointcloud from which this cluster was created. 
+            /// Note that it can be different from the boundingBoxCenter !
             template <typename Vector3f>
             Vector3f getCentroid() const
             {
@@ -125,6 +128,7 @@ namespace Augmenta
                 return outValue;
             }
 
+            /// @brief Cluster velocity between this frame and the previous.
             template <typename Vector3f>
             Vector3f getVelocity() const
             {
@@ -135,6 +139,7 @@ namespace Augmenta
                 return outValue;
             }
 
+            /// @brief The center of the cluster bounding box. In most cases, this is what you'll want to use to place a boint right below a person.
             template <typename Vector3f>
             Vector3f getBoundingBoxCenter() const
             {
@@ -155,6 +160,8 @@ namespace Augmenta
                 return outValue;
             }
 
+            /// @brief This is a factor of confidence in the cluster that can vary between [0, 1] over time.
+            /// This is mostly useful for advanced uses such as merging clusters coming from multiple Augmenta servers.
             float getWeight() const { return weight; }
 
             template <typename Vector3f>
@@ -242,7 +249,7 @@ namespace Augmenta
         public:
             int getPointCount() const { return pointsCount; }
 
-            /// @brief Copy the all cloud points at once. outData should be a contiguous container of Vector3f type (3*float = 12 bytes)
+            /// @brief Copy all the cloud points at once. outData should be a contiguous container of Vector3f type (3*float = 12 bytes)
             template <typename Vector3f>
             void getPointsData(Vector3f *outData) const
             {
@@ -266,6 +273,10 @@ namespace Augmenta
             const std::byte *pointsPtr = nullptr;
         };
 
+        /// @brief Can represent clusters and point clouds. You can consider 3 cases:
+        /// - object has a point cloud but no cluster: it is a raw point cloud, most likely covering the whole scene
+        /// - object has a cluster but no point cloud: it is a simple cluster
+        /// - object has a cluster and a point cloud: it is a cluster with an associated point cloud 
         class ObjectPacket
         {
             friend class DataBlobParser;
@@ -294,6 +305,7 @@ namespace Augmenta
             std::optional<PointCloudProperty> pointCloud;
         };
 
+        /// @brief Zone Events will be emitted by a Zone to notify users of change. They can be linked to the zone that emitted them.
         class ZoneEventPacket
         {
             friend class DataBlobParser;
@@ -375,10 +387,18 @@ namespace Augmenta
             /// @brief Return the address of the zone that emitted this event. You can use
             /// that to match the event with the zone container received at setup time.
             const std::string &getEmitterZoneAddress() const { return emitterZoneAddress; }
+
+            /// @brief Number of clusters that entered the zone this frame
             uint8_t getEnters() const { return enters; }
+
+            /// @brief Number of clusters that left the zone this frame
             uint8_t getLeaves() const { return leaves; }
+
+            /// @brief Number of cluster present in the zone this frame
             int getPresence() const { return presence; }
+
             float getDensity() const { return density; }
+            
             int getPropertiesCount() const { return properties.size(); }
             const std::vector<Property> &getProperties() const { return properties; }
 
@@ -649,6 +669,8 @@ namespace Augmenta
         std::string getRegisterMessage() const;
         std::string getPollMessage() const;
 
+        /// @brief Parse a data blob and return a DataBlob object that can be used to query relevant information from it.
+        /// @warning The DataBlob keeps references to the parsed buffer. Users are responsible for keeping the buffer available as long as they are using the DataBlob.  
         DataBlob parseDataBlob(const std::byte *blob, size_t blobSize);
         ControlMessage parseControlMessage(const char *rawMessage);
 
