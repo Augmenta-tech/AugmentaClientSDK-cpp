@@ -110,12 +110,12 @@ struct ExampleWebSocketClient
             {
                 switch (property.getType())
                 {
-                case Augmenta::DataBlob::ZonePacket::Property::Type::Slider:
+                case Augmenta::DataBlob::ZoneEventPacket::Property::Type::Slider:
                 {
                     const auto &sliderData = property.getSliderParameters();
                     auto value = sliderData->getValue();
                 }
-                case Augmenta::DataBlob::ZonePacket::Property::Type::XYPad:
+                case Augmenta::DataBlob::ZoneEventPacket::Property::Type::XYPad:
                 {
                     const auto &xyData = property.getXYPadParameters();
                     auto x = xyData->getX();

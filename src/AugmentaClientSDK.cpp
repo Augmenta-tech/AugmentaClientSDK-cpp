@@ -142,7 +142,7 @@ namespace Augmenta
 		enum class PacketType : uint8_t
 		{
 			Object = 0,
-			Zone = 1,
+			ZoneEvent = 1,
 			Scene = 2,
 			Bundle = 255,
 		};
@@ -185,10 +185,10 @@ namespace Augmenta
 				break;
 			}
 
-			case PacketType::Zone:
+			case PacketType::ZoneEvent:
 			{
-				auto &zone = outDataBlob.zones.emplace_back();
-				offset += processZonePacket(packetBuffer + offset, zone, options);
+				auto &zoneEvent = outDataBlob.zoneEvents.emplace_back();
+				offset += processZonePacket(packetBuffer + offset, zoneEvent, options);
 				break;
 			}
 
@@ -290,7 +290,7 @@ namespace Augmenta
 			return offset;
 		}
 
-		static size_t processZonePacket(const std::byte *buffer, DataBlob::ZonePacket &outZone, const ProtocolOptions &options)
+		static size_t processZonePacket(const std::byte *buffer, DataBlob::ZoneEventPacket &outZoneEvent, const ProtocolOptions &options)
 		{
 			size_t offset = 0;
 
@@ -298,40 +298,40 @@ namespace Augmenta
 			int controlIDSize;
 			offset += ReadBinary(buffer + offset, &controlIDSize);
 
-			outZone.controlID.resize(controlIDSize);
-			offset += ReadVector<char>(buffer + offset, outZone.controlID.data(), controlIDSize);
+			outZoneEvent.controlID.resize(controlIDSize);
+			offset += ReadVector<char>(buffer + offset, outZoneEvent.controlID.data(), controlIDSize);
 
-			offset += ReadBinary(buffer + offset, &outZone.enters);
-			offset += ReadBinary(buffer + offset, &outZone.leaves);
-			offset += ReadBinary(buffer + offset, &outZone.presence);
-			offset += ReadBinary(buffer + offset, &outZone.density);
+			offset += ReadBinary(buffer + offset, &outZoneEvent.enters);
+			offset += ReadBinary(buffer + offset, &outZoneEvent.leaves);
+			offset += ReadBinary(buffer + offset, &outZoneEvent.presence);
+			offset += ReadBinary(buffer + offset, &outZoneEvent.density);
 
 			int propertiesCount;
 			offset += ReadBinary(buffer + offset, &propertiesCount);
 
 			for (int propertyIdx = 0; propertyIdx < propertiesCount; ++propertyIdx)
 			{
-				auto &property = outZone.properties.emplace_back();
+				auto &property = outZoneEvent.properties.emplace_back();
 
 				offset += sizeof(int); // Skip size
 				offset += ReadBinary(buffer + offset, &property.type);
 
 				switch (property.type)
 				{
-				case DataBlob::ZonePacket::Property::Type::Slider:
+				case DataBlob::ZoneEventPacket::Property::Type::Slider:
 				{
-					auto &data = property.data.emplace<DataBlob::ZonePacket::SliderProperty>();
+					auto &data = property.data.emplace<DataBlob::ZoneEventPacket::SliderProperty>();
 					offset += ReadBinary(buffer + offset, &data.value);
 					break;
 				}
-				case DataBlob::ZonePacket::Property::Type::XYPad:
+				case DataBlob::ZoneEventPacket::Property::Type::XYPad:
 				{
-					auto &data = property.data.emplace<DataBlob::ZonePacket::XYPadProperty>();
+					auto &data = property.data.emplace<DataBlob::ZoneEventPacket::XYPadProperty>();
 					offset += ReadBinary(buffer + offset, &data.x);
 					offset += ReadBinary(buffer + offset, &data.y);
 					break;
 				}
-				case DataBlob::ZonePacket::Property::Type::PointCloud:
+				case DataBlob::ZoneEventPacket::Property::Type::PointCloud:
 				{
 					auto &data = property.data.emplace<DataBlob::PointCloudProperty>();
 					offset += ReadBinary(buffer + offset, &data.pointsCount);
@@ -340,7 +340,7 @@ namespace Augmenta
 					break;
 				}
 				default:
-					throw(std::runtime_error("Unknown zone property type encountered."));
+					throw(std::runtime_error("Unknown zone event property type encountered."));
 				}
 			}
 

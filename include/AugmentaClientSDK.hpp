@@ -294,7 +294,7 @@ namespace Augmenta
             std::optional<PointCloudProperty> pointCloud;
         };
 
-        class ZonePacket
+        class ZoneEventPacket
         {
             friend class DataBlobParser;
 
@@ -386,18 +386,26 @@ namespace Augmenta
             std::vector<Property> properties;
         };
 
+        [[deprecated("ZonePacket is deprecated. Please use ZoneEventPacket instead.")]]
+        typedef ZoneEventPacket ZonePacket;
+
         size_t getObjectCount() const { return objects.size(); }
         const std::vector<ObjectPacket> &getObjects() const { return objects; }
 
-        size_t getZoneCount() const { return zones.size(); }
-        const std::vector<ZonePacket> &getZones() const { return zones; }
+        [[deprecated("DataBlob::getZoneCount() has been renamed, please use DataBlob::getZoneEventCount() instead.")]]
+        size_t getZoneCount() const { return getZoneEventCount(); }
+        size_t getZoneEventCount() const { return zoneEvents.size(); }
 
+        [[deprecated("DataBlob::getZones() has been renamed, please use DataBlob::getZoneEvents() instead.")]]
+        const std::vector<ZoneEventPacket> &getZones() const { return getZoneEvents(); }
+        const std::vector<ZoneEventPacket> &getZoneEvents() const { return zoneEvents; }
+        
         const SceneInfoPacket &getSceneInfo() const { return sceneInfo; }
 
     private:
         SceneInfoPacket sceneInfo;
         std::vector<ObjectPacket> objects;
-        std::vector<ZonePacket> zones;
+        std::vector<ZoneEventPacket> zoneEvents;
     };
 
     class ControlMessage
