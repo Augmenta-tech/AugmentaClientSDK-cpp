@@ -64,6 +64,7 @@ namespace Augmenta
         bool streamClouds = true;
         bool streamClusters = true;
         bool streamClusterPoints = true;
+		bool streamMetadata = true;
         bool streamZonePoints = false;
         RotationMode boxRotationMode = RotationMode::Quaternions;
         AxisTransform axisTransform; // TODO: Default ?
