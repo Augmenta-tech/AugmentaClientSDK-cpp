@@ -352,10 +352,13 @@ namespace Augmenta
 			// Packet size and ID have already been read
 			size_t offset = 0;
 
-			offset += ReadBinary(buffer + offset, &outScene.addressLength);
-			outScene.addressPtr = buffer + offset;
+			int addressSize = 0;
+			offset += ReadBinary(buffer + offset, &addressSize);
 
-			return offset + (outScene.addressLength * sizeof(char));
+			outScene.sceneAddress.resize(addressSize);
+			offset += ReadVector<char>(buffer + offset, outScene.sceneAddress.data(), addressSize);
+
+			return offset;
 		}
 	};
 

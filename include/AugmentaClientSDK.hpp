@@ -95,18 +95,10 @@ namespace Augmenta
             friend class DataBlobParser;
 
         public:
-            int getAddressLength() const { return addressLength; }
-
-            template <typename CharT>
-            void getAddress(CharT *outStr) const
-            {
-                static_assert(sizeof(CharT) == 4);
-                std::memcpy(outStr, addressPtr, sizeof(CharT));
-            }
+            const std::string& getAddress() const { return sceneAddress; }
 
         private:
-            int addressLength;
-            const std::byte *addressPtr = nullptr;
+            std::string sceneAddress;
         };
 
         class ClusterProperty
@@ -669,6 +661,7 @@ namespace Augmenta
 
         std::string getRegisterMessage() const;
         std::string getPollMessage() const;
+        const ProtocolOptions& getCurrentOptions() const { return options; }
 
         /// @brief Parse a data blob and return a DataBlob object that can be used to query relevant information from it.
         /// @warning The DataBlob keeps references to the parsed buffer. Users are responsible for keeping the buffer available as long as they are using the DataBlob.  
