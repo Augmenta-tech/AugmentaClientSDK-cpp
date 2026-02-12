@@ -112,7 +112,7 @@ namespace Augmenta
         bool streamZonePoints = false;
 
         RotationMode boxRotationMode = RotationMode::Quaternions;
-        AxisTransform axisTransform; // TODO: Default ?
+        AxisTransform axisTransform; // @TODO: Default ?
 
         /// @brief enable ZSTD compression on the binary data's stream
         bool useCompression = true;

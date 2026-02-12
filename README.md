@@ -30,7 +30,8 @@ The SDK implement the following protocol : [Augmenta Websocket V2](https://augme
 ## Option
 Here are all the available options for the client initialization: 
 
-```c++
+```cpp
+
     struct ProtocolOptions
     {
 
@@ -54,7 +55,7 @@ Here are all the available options for the client initialization:
                 ZUpRightHanded,
                 ZUpLeftHanded,
                 YUpRightHanded,
-                YUpLeftHanded,
+                YUpLeftHanded, // used in the front-end GUI of Augmenta
             };
 
             /// @brief Specifies the origin position for coordinate system or layout calculations.
@@ -70,12 +71,12 @@ Here are all the available options for the client initialization:
             /// cloud data will be provided.
             /// 
             /// - Absolute referes to World space coordinates in relation
-            /// to the origin visible in Augmenta's front-end ui. 
+            ///   to the origin visible in Augmenta's front-end ui. 
             /// - Relative give coordinates to the parent. Clusters are
-            /// considered childs of the scene they are computed in and are then
-            /// placed based on that scene's origin.
+            ///   considered childs of the scene they are computed in and are then
+            ///   placed based on that scene's origin.
             /// - Normalized gives coordinates relative between 0 and 1 based on
-            /// the scene dimensions.
+            ///   the scene dimensions.
             enum class CoordinateSpace
             {
                 Absolute,
@@ -91,8 +92,6 @@ Here are all the available options for the client initialization:
             bool flipY = false;
             bool flipZ = false;
             CoordinateSpace coordinateSpace = CoordinateSpace::Absolute;
-            // public originOffset; // TODO
-            // public customMatrix; // TODO
 
             bool operator==(const AxisTransform& other) const;
             bool operator!=(const AxisTransform& other) const;
@@ -144,17 +143,16 @@ Here are all the available options for the client initialization:
     };
 ```
 
-> Note: To change any parameter after initialization, shutdown the client, change the options and re-initialize it. 
+> **Note:** To change any parameter after initialization, shutdown the client re-initialize it with the new options. 
 >  
-> This will ensure that the server is correctly updated with the new options. Id and names will persist as long as 
-> the server is not restarted. Though, changes may have occured during the shutdown, so you may want to do a full 
-> removal on shutdown to prevent client-side ghosts.
+> Id and names will persist as long as the server is not restarted. Beware that changes may have occured during the downtime.
 
 ## Data types
 The SDK will not provide fixed types for the received Object to allow for implementor's discretion regarding about math libraries or features to use.
 Instead, here is an optional abstract representation of the data types used in the SDK:
 
 ```md
+Pseudo-code
 // V1 Full data structure. Match Augmenta's protocol but might be overkill for some use cases.
 
 Type AugmentaPointCloud : Vector3 array
@@ -202,6 +200,8 @@ type zone : AugmentaArborescenceNode :
 		... shape parameters
 
 ```
+
+> **Note:** Points Cloud attached to a Zone or cluster are positionned relative to the parent Scene when *CoordinateSpace::Relative* is used.
 
 ## Dependencies
  - [zstd](https://github.com/facebook/zstd)
