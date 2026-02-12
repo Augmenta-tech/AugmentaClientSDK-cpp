@@ -13,6 +13,8 @@ namespace Augmenta
 {
     struct ProtocolOptions
     {
+
+        /// @brief Specifies the mode for representing rotations for all non-streamed objects
         enum class RotationMode
         {
             Radians,
@@ -20,8 +22,13 @@ namespace Augmenta
             Quaternions,
         };
 
+        /// @brief Defines a coordinate system transformation configuration, including axis orientation, origin placement, axis flipping, and coordinate space type. 
+        /// 
+        /// Augmenta internally use a left handed Y-up coordinate system with the origin at the bottom left of the scene, but 
+        /// you can specify a different configuration here. Augmenta will take care of transforming all the data to match it.
         struct AxisTransform
         {
+            /// @brief Defines the coordinate system axis mode.
             enum class AxisMode
             {
                 ZUpRightHanded,
@@ -30,6 +37,7 @@ namespace Augmenta
                 YUpLeftHanded,
             };
 
+            /// @brief Specifies the origin position for coordinate system or layout calculations.
             enum class OriginMode
             {
                 BottomLeft,
@@ -38,6 +46,16 @@ namespace Augmenta
                 TopRight,
             };
 
+            /// @brief Defines the coordinate space in which scenes, zones, cluster and point
+            /// cloud data will be provided.
+            /// 
+            /// - Absolute referes to World space coordinates in relation
+            /// to the origin visible in Augmenta's front-end ui. 
+            /// - Relative give coordinates to the parent. Clusters are
+            /// considered childs of the scene they are computed in and are then
+            /// placed based on that scene's origin.
+            /// - Normalized gives coordinates relative between 0 and 1 based on
+            /// the scene dimensions.
             enum class CoordinateSpace
             {
                 Absolute,
@@ -47,6 +65,8 @@ namespace Augmenta
 
             AxisMode axis = AxisMode::ZUpRightHanded;
             OriginMode origin = OriginMode::BottomLeft;
+
+            /// @brief finer controls to flip specific axis if needed. 
             bool flipX = false;
             bool flipY = false;
             bool flipZ = false;
@@ -58,20 +78,52 @@ namespace Augmenta
             bool operator!=(const AxisTransform& other) const;
         };
 
+        /// @brief Protocol version 2.
         int version = 2;
+        
+        /// @brief tags are used to filter what content to be streamed by the server. 
+        /// You may add tags to scenes in the backend GUI and have only one scene's 
+        /// clusters, zone events and point clouds streamed by adding the 
+        /// corresponding tag to this list. If the list is empty, all content 
+        /// will be streamed. 
         std::vector<std::string> tags;
+
+        /// @brief Downsampling factor for point clouds. 
+        /// 
+        /// It is very usefull when you want to reduce the number of points
+        /// received for performance reasons. You may even cap your global 
+        /// cluster size by dynamically changing this property.
+        /// 
+        /// For example, a value of 2 means that only every 2nd point will be 
+        /// streamed. Must be superior or equal to 1.
         int downSample = 1;
+
+        /// @brief Whether the server should send the scene Point Cloud data.
         bool streamClouds = true;
+        /// @brief Whether the server should send the scene Clusters data.
         bool streamClusters = true;
+        /// @brief Whether the server should add the points that make up a cluster to each cluster packet.
         bool streamClusterPoints = true;
-		bool streamSkeletonData = true;
-		bool streamMetadata = true;
+
+		// bool streamSkeletonData = true; // @TODO: Not implemented yet
+        // bool streamMetadata = true; // @TODO: Not implemented yet
+
+        /// @brief Whether the server should add the points included in a zone to each zone packet.
         bool streamZonePoints = false;
+
         RotationMode boxRotationMode = RotationMode::Quaternions;
         AxisTransform axisTransform; // TODO: Default ?
+
+        /// @brief enable ZSTD compression on the binary data's stream
         bool useCompression = true;
+
+        // @brief By default, Augmenta will send data as soon as it is
+        // available. If that's overwelming your application, you can enable
+        // this option to only receive data only on demand (by sending a poll request)
         bool usePolling = false;
-        bool displayPointIntensity = false;
+
+        // TODO: Not implemented yet, may need v3?
+        bool displayPointIntensity = false; 
 
         bool operator==(const ProtocolOptions& other) const;
         bool operator!=(const ProtocolOptions& other) const;
