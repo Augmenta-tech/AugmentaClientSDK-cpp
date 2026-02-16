@@ -21,7 +21,7 @@ The SDK revolves around creating an `Augmenta::Client` object and using it to pa
 See [examples/Example.cpp](examples/Example.cpp) for a full usage example.
 
 ### Start connection
-When starting a connection, call `client.initialize(MyClientName,Options)`.
+When starting a connection, call `client.initialize(MyClientName: string, Options: ProtocolOptions)`.
 When disconnecting, during closing or when changing urls, call `client.shutdown();`.
 
 ## Websocket Protocol
@@ -97,7 +97,7 @@ Here are all the available options for the client initialization:
             bool operator!=(const AxisTransform& other) const;
         };
 
-        /// @brief Protocol version 2
+        /// @brief Protocol version 1 or 2 (better use 2)
         int version = 2;
         
         /// @brief tags are used to filter what content to be streamed by the server. 
@@ -137,7 +137,7 @@ Here are all the available options for the client initialization:
 
         // @brief By default, Augmenta will send data as soon as it is
         // available. If that's overwelming your application, you can enable
-        // this option to only receive data only on demand (by sending a poll request)
+        // this option to only receive data on demand (by sending a poll request)
         bool usePolling = false;
 
     };
@@ -153,7 +153,7 @@ Instead, here is an optional abstract representation of the data types used in t
 
 ```md
 Pseudo-code
-// V1 Full data structure. Match Augmenta's protocol but might be overkill for some use cases.
+// Full data structure. Match Augmenta's protocol but might be overkill for some use cases.
 
 Type AugmentaPointCloud : Vector3 array
 
