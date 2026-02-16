@@ -135,8 +135,7 @@ Here are all the available options for the client initialization:
         /// @brief enable ZSTD compression on the binary data's stream
         bool useCompression = true;
 
-        // @brief By default, Augmenta will send data as soon as it is
-        // available. If that's overwelming your application, you can enable
+        // @brief By default, Augmenta will send data as soon as possible. you can enable
         // this option to only receive data on demand (by sending a poll request)
         bool usePolling = false;
 
