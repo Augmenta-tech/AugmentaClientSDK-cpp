@@ -30,6 +30,9 @@ cmake --build build
 The SDK revolves around creating an `Augmenta::Client` object and using it to parse data blobs and messages received.
 See [examples/Example.cpp](examples/Example.cpp) for a full usage example.
 
+Augmenta's server is designed to run perpetually. This include handling automatic restarts in case of crashes, reboot or any kind of downtime. 
+When Implementing the SDK, you must take this into account and make sure to handle the connection lifecycle properly. For exmaple, you must try to reconnect in case of disconnection and make sure to shutdown the client properly when closing the application or changing urls.
+
 ### Start connection
 When starting a connection, call `client.initialize(MyClientName: string, Options: ProtocolOptions)`.
 When disconnecting, during closing or when changing urls, call `client.shutdown();`.
