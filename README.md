@@ -4,13 +4,13 @@ The goal of this library is to make consuming the stream output of an Augmenta s
 
 ## Features
 The features currently implemented are:
-- **Tracking of clusters** : Augmenta send a list of objects with their id, centroid position, bounding box and velocity (with optional point cloud data).
-- **Volumetric data** : Optional global point cloud of the whole scene. Richness of the point cloud is controled in the Augmenta software, though you can control downsampling through the sdk.
-- **Zones** : You can define zones in the Augmenta software and receive events like entering, leaving, presence, and other dynamic values.
+- **Tracking data** : Augmenta sends a list of objects with their id, centroid position, bounding box and velocity (with optional point cloud data).
+- **Volumetric data** : The point cloud of the whole scene. Richness of the point cloud can be controled through the Augmenta software or through the sdk. Point cloud from only specific zones can be requested.
+- **Zones events** : You can define 3D zones in the Augmenta software and receive events like entering, leaving, presence, and other dynamic values. 3D zones are sent through the SDK to synchronize and display them, manipulating them from the SDK is planned but not yet available.
 
-Fteaures yet to be implemented are:
+Features yet to be implemented are:
 - **Bi-directional communication** : While you can use OSC to control Augmenta, the same is not yet possible through the websocket protocol.
-- **Skeleton tracking** : We plan to add support for receiving skeleton data from the server in the future.
+- **Skeleton tracking** : We plan to add support for receiving skeleton data in the future.
 
 ## Building
 We use CMake as our buildsystem.
@@ -30,15 +30,12 @@ cmake --build build
 The SDK revolves around creating an `Augmenta::Client` object and using it to parse data blobs and messages received.
 See [examples/Example.cpp](examples/Example.cpp) for a full usage example.
 
-Augmenta's server is designed to run perpetually. This include handling automatic restarts in case of crashes, reboot or any kind of downtime. 
-When Implementing the SDK, you must take this into account and make sure to handle the connection lifecycle properly. For exmaple, you must try to reconnect in case of disconnection and make sure to shutdown the client properly when closing the application or changing urls.
+Augmenta's server and software are designed to run perpetually. This include handling automatic restarts in case of crashes, reboot or any kind of downtime. 
+When Implementing the SDK, you must take this into account and make sure to handle the connection lifecycle properly. For example, you must try to reconnect regularly in case of disconnection and make sure to shutdown the client properly when closing the application or changing urls.
 
 ### Start connection
 When starting a connection, call `client.initialize(MyClientName: string, Options: ProtocolOptions)`.
 When disconnecting, during closing or when changing urls, call `client.shutdown();`.
-
-## Websocket Protocol
-The SDK implement the following protocol : [Augmenta Websocket V2](https://augmentatech.notion.site/WebSocket-Protocol-Specification-v2-637551d8e04a4015a56526d80e1b10f0?pvs=74)
 
 ## Option
 Here are all the available options for the client initialization: 
@@ -215,6 +212,7 @@ type zone : AugmentaArborescenceNode :
 
 > **Note:** Points Cloud attached to a Zone or cluster are positionned relative to the parent Scene when *CoordinateSpace::Relative* is used.
 
-## Dependencies
+## Dependencies and ressources
  - [zstd](https://github.com/facebook/zstd)
  - [nlohmann::json](https://github.com/nlohmann/json)
+ - [Augmenta Websocket protocol V2](https://augmentatech.notion.site/WebSocket-Protocol-Specification-v2-637551d8e04a4015a56526d80e1b10f0?pvs=74)
