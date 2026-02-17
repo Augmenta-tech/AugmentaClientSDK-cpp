@@ -2,6 +2,16 @@
 
 The goal of this library is to make consuming the stream output of an Augmenta server as easy as possible. As of right now this only refers to the data emitted through websocket by the Websocket Output node, but other network protocols might be added later on.
 
+## Features
+The features currently implemented are:
+- **Tracking of clusters** : Augmenta send a list of objects with their id, centroid position, bounding box and velocity (with optional point cloud data).
+- **Volumetric data** : Optional global point cloud of the whole scene. Richness of the point cloud is controled in the Augmenta software, though you can control downsampling through the sdk.
+- **Zones** : You can define zones in the Augmenta software and receive events like entering, leaving, presence, and other dynamic values.
+
+Fteaures yet to be implemented are:
+- **Bi-directional communication** : While you can use OSC to control Augmenta, the same is not yet possible through the websocket protocol.
+- **Skeleton tracking** : We plan to add support for receiving skeleton data from the server in the future.
+
 ## Building
 We use CMake as our buildsystem.
 
