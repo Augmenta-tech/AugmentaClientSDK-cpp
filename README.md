@@ -1,6 +1,7 @@
 # Augmenta Client C++ SDK
 
-The goal of this library is to make consuming the stream output of an Augmenta server as easy as possible. As of right now this only refers to the data emitted through websocket by the Websocket Output node, but other network protocols might be added later on.
+The goal of this library is to make consuming the stream output of an Augmenta server as easy as possible. 
+As of right now this only refers to the data emitted through websocket by the Websocket Output node, but other network protocols might be added later on.
 
 ## Features
 The features currently implemented are:
@@ -33,11 +34,17 @@ See [examples/Example.cpp](examples/Example.cpp) for a full usage example.
 Augmenta's server and software are designed to run perpetually. This include handling automatic restarts in case of crashes, reboot or any kind of downtime. 
 When Implementing the SDK, you must take this into account and make sure to handle the connection lifecycle properly. For example, you must try to reconnect regularly in case of disconnection and make sure to shutdown the client properly when closing the application or changing urls.
 
+### Websocket
+This SDK does not come with a specific Websocket client. 
+The intention is to allow for implementor's discretion regarding Math library, Network sdk, and other dependencies.
+
+It works with any client by forwarding the stream to the `client.parseDataBlob(blob, blobSize)` method, and the messages to `client.parseControlMessage(rawMessage)`.
+
 ### Start connection
 When starting a connection, call `client.initialize(MyClientName: string, Options: ProtocolOptions)`.
 When disconnecting, during closing or when changing urls, call `client.shutdown();`.
 
-## Option
+### Options
 Here are all the available options for the client initialization: 
 
 ```cpp
@@ -215,4 +222,5 @@ type zone : AugmentaArborescenceNode :
 ## Dependencies and ressources
  - [zstd](https://github.com/facebook/zstd)
  - [nlohmann::json](https://github.com/nlohmann/json)
- - [Augmenta Websocket protocol V2](https://augmentatech.notion.site/WebSocket-Protocol-Specification-v2-637551d8e04a4015a56526d80e1b10f0?pvs=74)
+
+> Please reach out to us if you have any questions - Augmenta Team
