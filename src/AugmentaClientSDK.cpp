@@ -601,6 +601,7 @@ namespace Augmenta
 		registerJson["name"] = name;
 		registerJson["application-name"] = applicationName;
 		registerJson["application-version"] = applicationVersion;
+		registerJson["plugin-version"] = pluginVersion;
 		registerJson["options"] = optionsJson;
 
 		nlohmann::json dataJson;

@@ -662,6 +662,9 @@ namespace Augmenta
         void setApplicationName(const std::string& appName) { applicationName = appName; }
         void setApplicationVersion(const std::string& appVersion) { applicationVersion = appVersion; }
 
+        /// @brief In case you are using the SDK from a plugin, with a version number that can differ from the main application's one 
+        void setPluginVersion(const std::string& version) { pluginVersion = version; }
+
         std::string getRegisterMessage() const;
         std::string getPollMessage() const;
         const ProtocolOptions& getCurrentOptions() const { return options; }
@@ -672,8 +675,9 @@ namespace Augmenta
         ControlMessage parseControlMessage(const char *rawMessage);
 
     private:
-        std::string applicationName = "";
-        std::string applicationVersion = "";
+        std::string applicationName = "-";
+        std::string applicationVersion = "-";
+        std::string pluginVersion = "-";
         std::string name;
         ProtocolOptions options;
         std::vector<std::string> tags;
