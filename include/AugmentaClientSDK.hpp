@@ -391,8 +391,8 @@ namespace Augmenta
             int getPresence() const { return presence; }
 
             float getDensity() const { return density; }
-            
-            int getPropertiesCount() const { return properties.size(); }
+
+            size_t getPropertiesCount() const { return properties.size(); }
             const std::vector<Property> &getProperties() const { return properties; }
 
         private:
@@ -659,6 +659,9 @@ namespace Augmenta
         /// @brief Add a server-side tag to request.  
         void addTag(const std::string& tag);
 
+        void setApplicationName(const std::string& appName) { applicationName = appName; }
+        void setApplicationVersion(const std::string& appVersion) { applicationVersion = appVersion; }
+
         std::string getRegisterMessage() const;
         std::string getPollMessage() const;
         const ProtocolOptions& getCurrentOptions() const { return options; }
@@ -669,6 +672,8 @@ namespace Augmenta
         ControlMessage parseControlMessage(const char *rawMessage);
 
     private:
+        std::string applicationName = "";
+        std::string applicationVersion = "";
         std::string name;
         ProtocolOptions options;
         std::vector<std::string> tags;
