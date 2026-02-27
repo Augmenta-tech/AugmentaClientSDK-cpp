@@ -40,17 +40,26 @@ namespace Augmenta
 
             enum class CoordinateSpace
             {
-                Absolute,
-                Relative,
-                Normalized,
+                Absolute, // Augmenta's world space coordinates
+                Relative, // Coordinates relative to the parent object. Clusters are considered as children of the scene
+                Normalized, // Coordinates are normalized between 0 and 1 based on scene dimensions and origin mode
             };
 
+            /// @brief Your desired coordinate system
+            /// @todo Should be renamed to something more specific
             AxisMode axis = AxisMode::ZUpRightHanded;
+
+            /// @brief Defines the coordinate space in which coordinates sent by augmenta will be
+            CoordinateSpace coordinateSpace = CoordinateSpace::Absolute;
+
+            /// @brief In Relative coordinates mode, the position of the scene's origin
             OriginMode origin = OriginMode::BottomLeft;
+
+            /// @brief Finer controls to flip specific axis, useful if the client software uses an uncommon coordinate system.
             bool flipX = false;
             bool flipY = false;
             bool flipZ = false;
-            CoordinateSpace coordinateSpace = CoordinateSpace::Absolute;
+            
             // public originOffset; // TODO
             // public customMatrix; // TODO
 
@@ -58,20 +67,49 @@ namespace Augmenta
             bool operator!=(const AxisTransform& other) const;
         };
 
+        /// @brief Specify the protocol version which Augmenta will use to encode outgoing packets
+        /// You should probably leave that to default unless you now what you are doing !
         int version = 2;
+        
+        /// @brief Tags can be used to filter the data sent by the server. Leave empty to receive everything.
         std::vector<std::string> tags;
+
+        /// @brief Downsampling factor for point clouds.
+        /// For example, a value of 2 means that only every 2nd point will be sent 
+        /// Must be >= 1
         int downSample = 1;
+
+        /// @brief Whether the server should send the scene Point Cloud data
         bool streamClouds = true;
+        /// @brief Whether the server should send the scene Cluster data
         bool streamClusters = true;
+        /// @brief Whether the server should send the points that make up a Cluster along with it
         bool streamClusterPoints = true;
-		bool streamSkeletonData = true;
-		bool streamMetadata = true;
+
+		// bool streamSkeletonData = true; // @TODO: Not implemented yet
+        // bool streamMetadata = true; // @TODO: Not implemented yet
+
+        /// @brief Whether the server should send the points included in a zone along with zone packets.
         bool streamZonePoints = false;
+
+        /// @brief Specify the orientation represention in which cluster rotations should be sent.
         RotationMode boxRotationMode = RotationMode::Quaternions;
-        AxisTransform axisTransform; // TODO: Default ?
+
+        /// @brief Specify how coordinates sent by Augmenta should be represented.
+        /// Augmenta will take care of transforming outgoing data in your desired coordinate system.
+        AxisTransform axisTransform;
+
+        /// @brief Enable ZSTD compression on the binary data stream. The SDK will handle decompression.
         bool useCompression = true;
+
+        /// @brief By default, Augmenta will send a new frame as soon as it is available.
+        /// If that is overwhelming your application, you can enable this option to only receive 
+        /// data on demand (by sending a poll request).
+        /// Note that this should be a last resort option.
         bool usePolling = false;
-        bool displayPointIntensity = false;
+
+        /// @todo Not implemented yet
+        bool displayPointIntensity = false; 
 
         bool operator==(const ProtocolOptions& other) const;
         bool operator!=(const ProtocolOptions& other) const;
@@ -79,12 +117,14 @@ namespace Augmenta
 
     enum class ClusterState : int
     {
-        Entered = 0,
-        Updated = 1,
-        WillLeave = 2,
-        Ghost = 3,
+        Entered = 0, // First frame the cluster is present
+        Updated = 1, // Normal state of a cluster
+        WillLeave = 2, // Last frame the cluster is present, it will not be here on the next
+        Ghost = 3, // If ghosting is enabled, clusters will be kept a few frames in this state after being lost. From there they can either be picked back up (Update) or disappear (WillLeave).
     };
 
+    /// @brief Used to query specific information from data frames received from the server
+    /// @warning Keeps references to the parsed buffer. Users are responsible for keeping the buffer available as long as they are using the DataBlob.  
     class DataBlob
     {
         friend class DataBlobParser;
@@ -101,6 +141,7 @@ namespace Augmenta
             std::string sceneAddress;
         };
 
+        /// @brief A cluster represents a tracked group of points. This is often an objet or a person.
         class ClusterProperty
         {
             friend class DataBlobParser;
@@ -227,11 +268,9 @@ namespace Augmenta
             std::array<float, 3> centroid;
             std::array<float, 3> velocity;
             std::array<float, 3> boundingBoxCenter;
+            std::array<float, 4> boundingBoxRotation;
             std::array<float, 3> boundingBoxSize;
             float weight;
-
-            std::array<float, 4> boundingBoxRotation;
-
             std::array<float, 3> lookAt;
         };
 
@@ -242,7 +281,7 @@ namespace Augmenta
         public:
             int getPointCount() const { return pointsCount; }
 
-            /// @brief Copy all the cloud points at once. outData should be a contiguous container of Vector3f type (3*float = 12 bytes)
+            /// @brief Copy all the cloud points at once. outData should point to a contiguous container of Vector3f type (3*float = 12 bytes)
             template <typename Vector3f>
             void getPointsData(Vector3f *outData) const
             {
@@ -255,10 +294,29 @@ namespace Augmenta
             Vector3f getPoint(size_t pointIdx) const
             {
                 static_assert(sizeof(Vector3f) == 12);
+                assert(pointsCount < pointIdx);
 
                 Vector3f outPoint;
                 std::memcpy(&outPoint, pointsPtr + (pointIdx * sizeof(Vector3f)), sizeof(Vector3f));
                 return outPoint;
+            }
+
+            float getPointX(size_t pointIdx) const
+            {
+                assert(pointsCount < pointIdx);
+                return pointsPtr + (pointIdx * sizeof(float) * 3);
+            }
+
+            float getPointY(size_t pointIdx) const
+            {
+                assert(pointsCount < pointIdx);
+                return pointsPtr + (pointIdx * sizeof(float) * 3) + sizeof(float);
+            }
+
+            float getPointZ(size_t pointIdx) const
+            {
+                assert(pointsCount < pointIdx);
+                return pointsPtr + (pointIdx * sizeof(float) * 3) + sizeof(float) * 2;
             }
 
         private:
@@ -336,8 +394,8 @@ namespace Augmenta
                 enum class Type : uint8_t
                 {
                     Unknown = UINT8_MAX,
-                    Slider = 0,
-                    XYPad = 1,
+                    Slider = 0, // 1D slider. Axis is defined by the zone's configuration in Augmenta
+                    XYPad = 1, // 2D slider
                     PointCloud = 2,
                 };
 
@@ -426,6 +484,7 @@ namespace Augmenta
         std::vector<ZoneEventPacket> zoneEvents;
     };
 
+    /// @brief Used to query information from a Message (Setup/Update) received from the server
     class ControlMessage
     {
         friend class ControlMessageParser;
@@ -650,7 +709,10 @@ namespace Augmenta
     class Client
     {
     public:
+        /// @brief Initialize the client with a name and a set of options
         void initialize(const std::string &clientName, const ProtocolOptions &options);
+        
+        /// @brief Clear internal state
         void shutdown();
 
         /// @brief Clear requested tags list
@@ -663,9 +725,12 @@ namespace Augmenta
         std::string getPollMessage() const;
         const ProtocolOptions& getCurrentOptions() const { return options; }
 
-        /// @brief Parse a data blob and return a DataBlob object that can be used to query relevant information from it.
+        /// @brief Parse a binary message received from the server and return a DataBlob object that can be used to query relevant information from it.
         /// @warning The DataBlob keeps references to the parsed buffer. Users are responsible for keeping the buffer available as long as they are using the DataBlob.  
         DataBlob parseDataBlob(const std::byte *blob, size_t blobSize);
+        
+        /// @brief Parse a text message received from the server and return a ControlMessage object
+        /// that can be used to retrieve the information.
         ControlMessage parseControlMessage(const char *rawMessage);
 
     private:
