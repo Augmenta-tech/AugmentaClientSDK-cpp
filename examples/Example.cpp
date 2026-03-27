@@ -4,13 +4,41 @@
 #include <array>
 #include <iostream>
 
-// Sample data types. Replace with your own types !
 using Vector3f = std::array<float, 3>;
-using PointCloud = std::vector<Vector3f>;
-struct Cluster {
-    Vector3f position;
-};
 using String = std::string;
+
+// Sample data types. Replace with your own !
+using PointCloud = std::vector<Vector3f>;
+
+struct Cluster 
+{
+    Vector3f boundingBoxPosition;
+    Vector3f boundingBoxSize;
+    Vector3f centroid;
+    Vector3f velocity;
+    float weight;
+    PointCloud pointCloud;
+};
+
+struct ZoneEvent
+{
+    std::array<float, 2> xyPad;
+    int presence;
+    float sliderValue;
+    int enters;
+    int leaves;
+    PointCloud pointCloud;
+};
+
+struct HierarchyObject
+{
+    String type;
+    String name;
+    String address;
+    Vector3f position;
+    Vector3f orientation;
+    std::vector<HierarchyObject> children;
+};
 
 struct ExampleWebSocketClient
 {
@@ -63,65 +91,88 @@ struct ExampleWebSocketClient
     // 4 (cont.) ------
     void OnDataBlobReceived(const std::vector<std::byte> &dataBlob)
     {
+        // You might want to keep that somewhere else
+        std::vector<Cluster> frameClusters;
+        std::vector<PointCloud> frameScenePointClouds;
+        std::vector<ZoneEvent> frameZoneEvents;
+
         auto parsedData = augmentaClient.parseDataBlob(dataBlob.data(), dataBlob.size());
 
         // Scene info
         const auto &sceneInfo = parsedData.getSceneInfo();
         
-        String scenePath;
-        scenePath.resize(sceneInfo.getAddressLength());
-        sceneInfo.getAddress(scenePath.data());
+        String scenePath = sceneInfo.getAddress();
 
-        // Objects
+        // Objects (Clusters and Point Clouds)
         for (auto &object : parsedData.getObjects())
         {
             const auto &objectID = object.getID();
             if (object.hasCluster())
             {
                 auto &clusterInfo = object.getCluster();
+            
+                Cluster& cluster = frameClusters.emplace_back();
+                cluster.boundingBoxPosition = clusterInfo.getBoundingBoxCenter<Vector3f>();
+                cluster.boundingBoxSize = clusterInfo.getBoundingBoxSize<Vector3f>();
+                cluster.centroid = clusterInfo.getCentroid<Vector3f>();
+                cluster.velocity = clusterInfo.getVelocity<Vector3f>();
+                cluster.weight = clusterInfo.getWeight();
 
-                if (clusterInfo.getState() == Augmenta::ClusterState::Entered)
+                if (object.hasPointCloud())
                 {
-                    // This is a new cluster, add it to our list
-                }
+                    // If the object has both a cluster and point cloud property,
+                    // it is the cluster's contained point cloud
+                    auto& pcInfo = object.getPointCloud();
 
-                if (clusterInfo.getState() == Augmenta::ClusterState::WillLeave)
-                {
-                    // Clean up leaving clusters
+                    cluster.pointCloud.resize(pcInfo.getPointCount());
+                    pcInfo.getPointsData(cluster.pointCloud.data());
                 }
             }
-
-            if (object.hasPointCloud())
+            else if (object.hasPointCloud())
             {
                 auto &pcInfo = object.getPointCloud();
 
                 // Do something with the data
                 // For example you can copy the point data to your own data structure.
-                PointCloud pc;
+                PointCloud &pc = frameScenePointClouds.emplace_back();
                 pc.resize(pcInfo.getPointCount());
                 pcInfo.getPointsData(pc.data());
             }
         }
 
-        // Zones
-        for (const auto &zone : parsedData.getZones())
+        // Zone Events
+        for (const auto &zoneEventInfo : parsedData.getZoneEvents())
         {
-            for (const auto &property : zone.getProperties())
+            const auto emitterZoneAddress = zoneEventInfo.getEmitterZoneAddress();
+            // You could use that to map the event to your zone struct
+
+            ZoneEvent& zoneEvent = frameZoneEvents.emplace_back();
+            zoneEvent.enters = zoneEventInfo.getEnters();
+            zoneEvent.leaves = zoneEventInfo.getLeaves();
+            zoneEvent.presence = zoneEventInfo.getPresence();
+
+            for (const auto &property : zoneEventInfo.getProperties())
             {
                 switch (property.getType())
                 {
                 case Augmenta::DataBlob::ZoneEventPacket::Property::Type::Slider:
                 {
                     const auto &sliderData = property.getSliderParameters();
-                    auto value = sliderData->getValue();
+                    zoneEvent.sliderValue = sliderData->getValue();
+                    break;
                 }
                 case Augmenta::DataBlob::ZoneEventPacket::Property::Type::XYPad:
                 {
                     const auto &xyData = property.getXYPadParameters();
-                    auto x = xyData->getX();
-                    auto y = xyData->getY();
+                    zoneEvent.xyPad = {xyData->getX(), xyData->getY()};
+                    break;
                 }
-                    // ...
+                case Augmenta::DataBlob::ZoneEventPacket::Property::Type::PointCloud:
+                {
+                    const auto& pcParams = property.getPointCloudParameters();
+                    zoneEvent.pointCloud.resize(pcParams->getPointCount());
+                    pcParams->getPointsData(zoneEvent.pointCloud.data());
+                }
                 }
             }
         }
